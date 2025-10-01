@@ -59,7 +59,7 @@ struct ContentView: View {
     private var rightPanel: some View {
         VStack(spacing: 16) {
             if let doc = cutDocument {
-                PDFThumbnailsView(document: doc)
+                PDFThumbnailsView(document: doc, skipPages: parseSkipPages())
                     .id("pdf-thumbnails-\(doc.pageCount)-\(horizontalShift)-\(verticalShift)")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color.gray.opacity(0.05))
@@ -340,6 +340,12 @@ struct ContentView: View {
         print("📂 Nastavení načtena")
     }
     
+    private func parseSkipPages() -> [Int] {
+        return skipPages.components(separatedBy: ",").compactMap { 
+            Int($0.trimmingCharacters(in: .whitespaces)) 
+        }
+    }
+    
     // Funkce pro regeneraci PDF při změně nastavení (bez vynechání stránek pro preview)
     private func regeneratePDF() {
         guard let original = originalDocument else { 
@@ -459,6 +465,7 @@ internal struct PrintHelper {
 // Thumbnaily PDF komponenta
 struct PDFThumbnailsView: View {
     let document: PDFDocument
+    let skipPages: [Int]
     
     var body: some View {
         GeometryReader { geometry in
@@ -482,6 +489,9 @@ struct PDFThumbnailsView: View {
                 ScrollView {
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: columns), spacing: 12) {
                         ForEach(0..<document.pageCount, id: \.self) { pageIndex in
+                            let pageNumber = pageIndex + 1
+                            let isSkipped = skipPages.contains(pageNumber)
+                            
                             VStack(spacing: 4) {
                                 if let page = document.page(at: pageIndex) {
                                     PDFThumbnailView(page: page)
@@ -490,16 +500,45 @@ struct PDFThumbnailsView: View {
                                         .cornerRadius(6)
                                         .shadow(radius: 2)
                                         .clipped()
+                                        .overlay(
+                                            // Ztmavení pro vynechané stránky
+                                            isSkipped ? 
+                                            Rectangle()
+                                                .fill(Color.black.opacity(0.6))
+                                                .cornerRadius(6)
+                                            : nil
+                                        )
+                                        .overlay(
+                                            // Text "VYNECHÁNO" pro vynechané stránky
+                                            isSkipped ?
+                                            Text("VYNECHÁNO")
+                                                .font(.caption)
+                                                .fontWeight(.bold)
+                                                .foregroundColor(.white)
+                                                .padding(4)
+                                                .background(Color.red.opacity(0.8))
+                                                .cornerRadius(4)
+                                            : nil
+                                        )
                                 } else {
                                     Rectangle()
                                         .fill(Color.gray.opacity(0.3))
                                         .frame(width: thumbnailWidth, height: thumbnailHeight)
                                         .cornerRadius(6)
+                                        .overlay(
+                                            // Ztmavení pro vynechané stránky
+                                            isSkipped ? 
+                                            Rectangle()
+                                                .fill(Color.black.opacity(0.6))
+                                                .cornerRadius(6)
+                                            : nil
+                                        )
                                 }
                                 
-                                Text("Str. \(pageIndex + 1)")
+                                Text("Str. \(pageNumber)")
                                     .font(.caption2)
-                                    .foregroundColor(.secondary)
+                                    .foregroundColor(isSkipped ? .red : .secondary)
+                                    .fontWeight(isSkipped ? .bold : .regular)
                             }
                         }
                     }
