@@ -24,8 +24,8 @@ struct ContentView: View {
     private let rotateClockwiseKey = "rotateClockwise"
     
     // Parametry pro posunutí řezů
-    @State private var horizontalShift: Double = 60.0
-    @State private var verticalShift: Double = 0.0
+    @State private var horizontalShift: Double = -15.0
+    @State private var verticalShift: Double = 30.0
     
     // Parametry pro vynechání stránek
     @State private var skipPages: String = "2,4,5,6"
@@ -224,11 +224,8 @@ struct ContentView: View {
                         // Uložíme původní dokument pro regeneraci
                         self.originalDocument = originalDocument
                         
-                        // Parse skip pages from string
-                        let skipPagesList = skipPages.components(separatedBy: ",")
-                            .compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
-                        
-                        if let processed = PDFCutter.cutToA6(document: originalDocument, horizontalShift: horizontalShift, verticalShift: verticalShift, skipPages: skipPagesList, rotateToPortrait: rotateToPortrait, disableCutting: disableCutting, rotateClockwise: rotateClockwise) {
+                        // Pro preview nepoužíváme vynechání stránek - zobrazíme všechny stránky
+                        if let processed = PDFCutter.cutToA6(document: originalDocument, horizontalShift: horizontalShift, verticalShift: verticalShift, skipPages: [], rotateToPortrait: rotateToPortrait, disableCutting: disableCutting, rotateClockwise: rotateClockwise) {
                             print("✅ PDF úspěšně rozřezán na A6, nový počet stránek: \(processed.pageCount)")
                             cutDocument = processed
                             pageCount = processed.pageCount
@@ -275,8 +272,8 @@ struct ContentView: View {
     
     // Funkce pro načítání nastavení
     private func loadSettings() {
-        horizontalShift = UserDefaults.standard.object(forKey: horizontalShiftKey) as? Double ?? 60.0
-        verticalShift = UserDefaults.standard.object(forKey: verticalShiftKey) as? Double ?? 0.0
+        horizontalShift = UserDefaults.standard.object(forKey: horizontalShiftKey) as? Double ?? -15.0
+        verticalShift = UserDefaults.standard.object(forKey: verticalShiftKey) as? Double ?? 30.0
         skipPages = UserDefaults.standard.string(forKey: skipPagesKey) ?? "2,4,5,6"
         rotateToPortrait = UserDefaults.standard.object(forKey: rotateToPortraitKey) as? Bool ?? true
         disableCutting = UserDefaults.standard.object(forKey: disableCuttingKey) as? Bool ?? false
