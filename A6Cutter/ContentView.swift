@@ -17,8 +17,11 @@ extension String {
 
 struct ContentView: View {
     @State private var isImporterPresented = false
-    @State private var isSaverPresented = false
-    @State private var isPreviewPresented = false
+    @State private var isPrintPresented = false
+    @FocusState private var isPrintButtonFocused: Bool
+    @FocusState private var isHorizontalShiftFocused: Bool
+    @FocusState private var isVerticalShiftFocused: Bool
+    @FocusState private var isSkipPagesFocused: Bool
     @State private var cutDocument: PDFDocument?
     @State private var originalDocument: PDFDocument?
     @State private var pageCount: Int = 0
@@ -58,7 +61,7 @@ struct ContentView: View {
             
             openPDFButton
             if let doc = cutDocument {
-                savePDFSection(doc: doc)
+                printSection(doc: doc)
             }
         }
         .frame(width: 300)
@@ -137,6 +140,7 @@ struct ContentView: View {
                 TextField("2,4,5,6", text: $skipPages)
                     .textFieldStyle(RoundedBorderTextFieldStyle())
                     .frame(width: 140)
+                    .focused($isSkipPagesFocused)
             }
         }
         .frame(width: 300, height: 120) // Pevná šířka a výška
@@ -191,25 +195,19 @@ struct ContentView: View {
         .controlSize(.large)
     }
     
-    private func savePDFSection(doc: PDFDocument) -> some View {
-        VStack(spacing: 8) {
+    private func printSection(doc: PDFDocument) -> some View {
+        VStack(spacing: 12) {
             Text("Počet stránek".localized + ": \(pageCount)")
                 .font(.caption)
                 .foregroundColor(.secondary)
             
-            HStack(spacing: 8) {
-                Button("Uložit PDF".localized) {
-                    savePDF(doc)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.regular)
-                
-                Button("Náhled v Preview".localized) {
-                    previewInPreview(doc)
-                }
-                .buttonStyle(.bordered)
-                .controlSize(.regular)
+            Button("Tisk".localized) {
+                printDocument(doc)
             }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .focused($isPrintButtonFocused)
+            .keyboardShortcut(.defaultAction)
         }
     }
     
@@ -304,6 +302,15 @@ struct ContentView: View {
                             print("✅ PDF úspěšně rozřezán na A6, nový počet stránek: \(processed.pageCount)")
                             cutDocument = processed
                             pageCount = processed.pageCount
+                            
+                            // Nastavíme fokus na tiskové tlačítko po načtení PDF
+                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+                                isSkipPagesFocused = false
+                                isHorizontalShiftFocused = false
+                                isVerticalShiftFocused = false
+                                isPrintButtonFocused = true
+                                print("🎯 Fokus nastaven na tiskové tlačítko po načtení PDF")
+                            }
                         } else {
                             print("❌ Chyba při řezání PDF na A6")
                         }
@@ -315,52 +322,38 @@ struct ContentView: View {
                 }
             }
         )
-        .fileExporter(
-            isPresented: $isSaverPresented,
-            document: cutDocument != nil ? PDFDocumentWrapper(document: cutDocument!, skipPages: skipPages.components(separatedBy: ",").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }) : nil,
-            contentType: .pdf,
-            defaultFilename: "A6Cutter_Output"
-        ) { result in
-            switch result {
-            case .success(let url):
-                print("✅ PDF uloženo do: \(url.path)")
-            case .failure(let error):
-                print("❌ Chyba při ukládání: \(error.localizedDescription)")
-            }
-        }
     }
     
-    private func savePDF(_ document: PDFDocument) {
-        isSaverPresented = true
-    }
     
-    private func previewInPreview(_ document: PDFDocument) {
-        print("👁️ Otevírám PDF v Preview s aplikováním filtru vynechání stránek...")
+    private func printDocument(_ document: PDFDocument) {
+        print("🖨️ Otevírám tiskový dialog s aplikováním filtru vynechání stránek...")
         
-        // Aplikujeme stejný filtr jako při ukládání
+        // Aplikujeme filtr vynechání stránek stejně jako při ukládání
         let skipPagesList = parseSkipPages()
+        print("📄 Seznam vynechaných stránek: \(skipPagesList)")
+        
         let filteredDocument = PDFDocument()
         var finalPageIndex = 0
         
         for pageIndex in 0..<document.pageCount {
             finalPageIndex += 1
             
-            // Skip pages based on user input (čísla stránek v konečném výsledku)
+            // Skip pages based on user input
             if skipPagesList.contains(finalPageIndex) {
-                print("⏭️ Přeskakuji stránku \(finalPageIndex) v preview")
+                print("⏭️ Přeskakuji stránku \(finalPageIndex) při tisku")
                 continue
             }
             
             if let page = document.page(at: pageIndex) {
                 filteredDocument.insert(page, at: filteredDocument.pageCount)
-                print("✅ Přidána stránka \(finalPageIndex) do preview")
+                print("✅ Přidána stránka \(finalPageIndex) do tisku")
             }
         }
         
-        print("📄 Preview bude obsahovat \(filteredDocument.pageCount) stránek (původně \(document.pageCount))")
+        print("📄 Tisk bude obsahovat \(filteredDocument.pageCount) stránek (původně \(document.pageCount))")
         
-        // Vytvoříme dočasný soubor
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("A6Cutter_Preview_\(UUID().uuidString).pdf")
+        // Vytvoříme dočasný soubor pro tisk
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("A6Cutter_Print_\(UUID().uuidString).pdf")
         
         do {
             // Uložíme filtrované PDF do dočasného souboru
@@ -370,19 +363,37 @@ struct ContentView: View {
             }
             try data.write(to: tempURL)
             
-            print("✅ Filtrované PDF uloženo do dočasného souboru: \(tempURL.path)")
+            print("✅ Filtrované PDF uloženo do dočasného souboru pro tisk: \(tempURL.path)")
             
-            // Otevřeme v Preview
+            // Otevřeme tiskový dialog pomocí NSWorkspace s filtrovaným PDF
             NSWorkspace.shared.open(tempURL)
             
-            // Smažeme dočasný soubor po 30 sekundách
-            DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
+            // Počkáme chvilku a pak otevřeme tiskový dialog
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                // Otevřeme tiskový dialog pomocí AppleScript
+                let script = """
+                tell application "Preview"
+                    activate
+                    tell application "System Events"
+                        keystroke "p" using command down
+                    end tell
+                end tell
+                """
+                
+                let appleScript = NSAppleScript(source: script)
+                appleScript?.executeAndReturnError(nil)
+                
+                print("🖨️ Tiskový dialog otevřen s filtrovaným PDF")
+            }
+            
+            // Smažeme dočasný soubor po 60 sekundách
+            DispatchQueue.main.asyncAfter(deadline: .now() + 60) {
                 try? FileManager.default.removeItem(at: tempURL)
-                print("🗑️ Dočasný soubor smazán: \(tempURL.path)")
+                print("🗑️ Dočasný soubor pro tisk smazán")
             }
             
         } catch {
-            print("❌ Chyba při ukládání filtrovaného PDF pro preview: \(error)")
+            print("❌ Chyba při ukládání filtrovaného PDF pro tisk: \(error)")
         }
     }
     
@@ -435,6 +446,15 @@ struct ContentView: View {
                 self.pageCount = processed.pageCount
                 print("🔄 Po aktualizaci - cutDocument: \(self.cutDocument?.pageCount ?? 0) stránek")
                 print("🔄 UI aktualizováno - cutDocument a pageCount nastaveny")
+                
+                // Nastavíme fokus na tiskové tlačítko po regeneraci PDF
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                    self.isSkipPagesFocused = false
+                    self.isHorizontalShiftFocused = false
+                    self.isVerticalShiftFocused = false
+                    self.isPrintButtonFocused = true
+                    print("🎯 Fokus nastaven na tiskové tlačítko po regeneraci PDF")
+                }
             }
         } else {
             print("❌ Chyba při regeneraci PDF")
