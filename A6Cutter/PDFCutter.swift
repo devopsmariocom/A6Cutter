@@ -5,6 +5,7 @@ import CoreGraphics
 enum PDFCutter {
     /// Cut a PDF document into A6 tiles preserving orientation.
     static func cutToA6(document: PDFDocument) -> PDFDocument? {
+        print("🔧 Začínám řezání PDF na A6...")
         let outputDocument = PDFDocument()
         
         // A6 size in mm
@@ -17,37 +18,52 @@ enum PDFCutter {
         }
         
         let pageCount = document.pageCount
+        print("📄 Počet stránek v původním PDF: \(pageCount)")
         
         for pageIndex in 0..<pageCount {
-            guard let page = document.page(at: pageIndex) else { continue }
+            guard let page = document.page(at: pageIndex) else { 
+                print("⚠️ Nelze načíst stránku \(pageIndex)")
+                continue 
+            }
             let pageRect = page.bounds(for: .mediaBox)
+            print("📐 Stránka \(pageIndex): \(pageRect.width) x \(pageRect.height) bodů")
             
-            // Determine A6 tile size in points, preserving the orientation of the page
+            // Determine A6 tile size in points
+            // For A4 landscape documents, we want landscape A6 tiles (148x105mm)
+            // For A4 portrait documents, we want portrait A6 tiles (105x148mm)
             let pageIsLandscape = pageRect.width > pageRect.height
             
-            let a6WidthPts = mmToPoints(pageIsLandscape ? a6HeightMM : a6WidthMM)
-            let a6HeightPts = mmToPoints(pageIsLandscape ? a6WidthMM : a6HeightMM)
+            // A6 landscape dimensions (148x105mm)
+            let a6LandscapeWidthPts = mmToPoints(148)   // A6 landscape width
+            let a6LandscapeHeightPts = mmToPoints(105)  // A6 landscape height
             
-            // Calculate how many tiles fit horizontally and vertically
-            var cols = Int(floor(pageRect.width / a6WidthPts))
-            var rows = Int(floor(pageRect.height / a6HeightPts))
+            // A6 portrait dimensions (105x148mm) 
+            let a6PortraitWidthPts = mmToPoints(105)    // A6 portrait width
+            let a6PortraitHeightPts = mmToPoints(148)   // A6 portrait height
             
-            if cols == 0 || rows == 0 {
-                // Ensure at least one tile in each direction, adjust tile size accordingly
-                cols = max(1, Int(ceil(pageRect.width / a6WidthPts)))
-                rows = max(1, Int(ceil(pageRect.height / a6HeightPts)))
-            }
+            // Use landscape A6 for landscape pages, portrait A6 for portrait pages
+            let a6WidthPts = pageIsLandscape ? a6LandscapeWidthPts : a6PortraitWidthPts
+            let a6HeightPts = pageIsLandscape ? a6LandscapeHeightPts : a6PortraitHeightPts
             
-            let tileWidth = pageRect.width / CGFloat(cols)
-            let tileHeight = pageRect.height / CGFloat(rows)
+            // Calculate how many A6 tiles fit horizontally and vertically
+            let cols = max(1, Int(ceil(pageRect.width / a6WidthPts)))
+            let rows = max(1, Int(ceil(pageRect.height / a6HeightPts)))
+            
+            // Use actual A6 dimensions for tiles
+            let tileWidth = a6WidthPts
+            let tileHeight = a6HeightPts
+            
+            let orientation = pageIsLandscape ? "landscape" : "portrait"
+            print("🔲 A6 \(orientation) rozměry: \(a6WidthPts) x \(a6HeightPts) bodů")
+            print("📊 Rozdělení: \(cols) x \(rows) dlaždic, velikost dlaždice: \(tileWidth) x \(tileHeight)")
             
             for row in 0..<rows {
                 for col in 0..<cols {
                     let cropRect = CGRect(
-                        x: pageRect.minX + CGFloat(col) * tileWidth,
-                        y: pageRect.minY + CGFloat(row) * tileHeight,
-                        width: tileWidth,
-                        height: tileHeight
+                        x: pageRect.minX + CGFloat(col) * a6WidthPts,
+                        y: pageRect.minY + CGFloat(row) * a6HeightPts,
+                        width: a6WidthPts,
+                        height: a6HeightPts
                     )
                     
                     guard let tilePDFData = renderTile(from: page, cropRect: cropRect, tileSize: CGSize(width: tileWidth, height: tileHeight)),
@@ -61,7 +77,9 @@ enum PDFCutter {
             }
         }
         
-        return outputDocument.pageCount > 0 ? outputDocument : nil
+        let finalPageCount = outputDocument.pageCount
+        print("✅ Dokončeno! Celkem vytvořeno \(finalPageCount) A6 stránek")
+        return finalPageCount > 0 ? outputDocument : nil
     }
     
     /// Render a cropped tile of a PDF page to PDF data.
@@ -75,9 +93,12 @@ enum PDFCutter {
         context.beginPDFPage(nil)
         context.saveGState()
         
-        // Transform page content to fit tile size and crop
-        let drawTransform = page.getDrawingTransform(.mediaBox, rect: CGRect(origin: .zero, size: tileSize), rotate: 0, preserveAspectRatio: false)
-        context.concatenate(drawTransform)
+        // Calculate scale to maintain aspect ratio
+        let scaleX = tileSize.width / cropRect.width
+        let scaleY = tileSize.height / cropRect.height
+        
+        // Apply transformations: scale and translate to crop the desired region
+        context.scaleBy(x: scaleX, y: scaleY)
         context.translateBy(x: -cropRect.minX, y: -cropRect.minY)
         
         page.draw(with: .mediaBox, to: context)
