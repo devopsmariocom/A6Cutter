@@ -26,6 +26,12 @@ struct ContentView: View {
     @State private var originalDocument: PDFDocument?
     @State private var pageCount: Int = 0
     
+    // Computed property pro finální počet stránek po odečtení vynechaných
+    private var finalPageCount: Int {
+        let skipPagesList = parseSkipPages()
+        return max(0, pageCount - skipPagesList.count)
+    }
+    
     // UserDefaults klíče pro ukládání nastavení
     private let horizontalShiftKey = "horizontalShift"
     private let verticalShiftKey = "verticalShift"
@@ -33,6 +39,9 @@ struct ContentView: View {
     private let rotateToPortraitKey = "rotateToPortrait"
     private let disableCuttingKey = "disableCutting"
     private let rotateClockwiseKey = "rotateClockwise"
+    private let rotationEnabledKey = "rotationEnabled"
+    private let cuttingEnabledKey = "cuttingEnabled"
+    private let skipPagesEnabledKey = "skipPagesEnabled"
     
     // Parametry pro posunutí řezů
     @State private var horizontalShift: Double = -15.0
@@ -50,12 +59,42 @@ struct ContentView: View {
     // Parametr pro směr otáčení
     @State private var rotateClockwise: Bool = true
     
+    // Enable/disable pro každou sekci
+    @State private var rotationEnabled: Bool = true
+    @State private var cuttingEnabled: Bool = true
+    @State private var skipPagesEnabled: Bool = true
+    
     private var leftPanel: some View {
         VStack(spacing: 16) {
-            cutShiftsSection
-            skipPagesSection
-            rotationSection
-            cuttingSection
+            // Krok 1: Otočení
+            stepSection(
+                stepNumber: 1,
+                title: "Rotate from landscape to portrait",
+                color: .green,
+                isEnabled: $rotationEnabled
+            ) {
+                rotationSection
+            }
+            
+            // Krok 2: Řezání (s posuny)
+            stepSection(
+                stepNumber: 2,
+                title: "Cutting",
+                color: .blue,
+                isEnabled: $cuttingEnabled
+            ) {
+                cuttingWithShiftsSection
+            }
+            
+            // Krok 3: Vynechání stránek
+            stepSection(
+                stepNumber: 3,
+                title: "Vynechání stránek",
+                color: .orange,
+                isEnabled: $skipPagesEnabled
+            ) {
+                skipPagesSection
+            }
             
             Spacer()
             
@@ -67,6 +106,94 @@ struct ContentView: View {
         .frame(width: 300)
     }
     
+    // Funkce pro vytvoření sekce s číslem kroku
+    private func stepSection<Content: View>(
+        stepNumber: Int,
+        title: String,
+        color: Color,
+        isEnabled: Binding<Bool>,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(spacing: 0) {
+            // Header s číslem kroku a disable tlačítkem
+            HStack {
+                ZStack {
+                    Circle()
+                        .fill(isEnabled.wrappedValue ? color : Color.gray)
+                        .frame(width: 24, height: 24)
+                    Text("\(stepNumber)")
+                        .font(.caption)
+                        .fontWeight(.bold)
+                        .foregroundColor(.white)
+                }
+                
+                Text(title.localized)
+                    .font(.headline)
+                    .foregroundColor(isEnabled.wrappedValue ? .primary : .secondary)
+                
+                Spacer()
+                
+                // Disable tlačítko v pravém horním rohu
+                Button(action: {
+                    isEnabled.wrappedValue.toggle()
+                }) {
+                    Image(systemName: isEnabled.wrappedValue ? "checkmark.circle.fill" : "circle")
+                        .foregroundColor(isEnabled.wrappedValue ? color : .gray)
+                        .font(.title3)
+                }
+                .buttonStyle(PlainButtonStyle())
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 16)
+            .padding(.bottom, 8)
+            
+            // Obsah sekce
+            content()
+                .padding(.horizontal, 16)
+                .padding(.bottom, 16)
+                .opacity(isEnabled.wrappedValue ? 1.0 : 0.4)
+                .disabled(!isEnabled.wrappedValue)
+        }
+        .frame(width: 300, height: 120)
+        .background(isEnabled.wrappedValue ? color.opacity(0.08) : Color.gray.opacity(0.05))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(isEnabled.wrappedValue ? color.opacity(0.3) : Color.gray.opacity(0.2), lineWidth: 2)
+        )
+    }
+    
+    // Nová sekce pro řezání s posuny
+    private var cuttingWithShiftsSection: some View {
+        VStack(spacing: 6) {
+            HStack {
+                Text("Horizontální posun".localized + ":")
+                    .frame(width: 90, alignment: .leading)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Slider(value: $horizontalShift, in: -100...100, step: 5)
+                    .accentColor(.blue)
+                Text("\(Int(horizontalShift))")
+                    .frame(width: 35)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            
+            HStack {
+                Text("Vertikální posun".localized + ":")
+                    .frame(width: 90, alignment: .leading)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                Slider(value: $verticalShift, in: -100...100, step: 5)
+                    .accentColor(.blue)
+                Text("\(Int(verticalShift))")
+                    .frame(width: 35)
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+        }
+    }
+
     private var rightPanel: some View {
         VStack(spacing: 16) {
             if let doc = cutDocument {
@@ -86,106 +213,28 @@ struct ContentView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
     
-    private var cutShiftsSection: some View {
-        VStack(spacing: 12) {
-            Text("Posunuti rezu".localized)
-                .font(.headline)
-                .foregroundColor(.primary)
-            
-            VStack(spacing: 8) {
-                HStack {
-                    Text("Horizontální posun".localized + ":")
-                        .frame(width: 90, alignment: .leading)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Slider(value: $horizontalShift, in: -100...100, step: 5)
-                        .accentColor(.blue)
-                    Text("\(Int(horizontalShift))")
-                        .frame(width: 35)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-                
-                HStack {
-                    Text("Vertikální posun".localized + ":")
-                        .frame(width: 90, alignment: .leading)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    Slider(value: $verticalShift, in: -100...100, step: 5)
-                        .accentColor(.blue)
-                    Text("\(Int(verticalShift))")
-                        .frame(width: 35)
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                }
-            }
-        }
-        .frame(width: 300, height: 120) // Pevná šířka a výška
-        .padding(16)
-        .background(Color.gray.opacity(0.08))
-        .cornerRadius(12)
-    }
     
     private var skipPagesSection: some View {
-        VStack(spacing: 12) {
-            Text("Vynechání stránek".localized)
-                .font(.headline)
-                .foregroundColor(.primary)
-            
-            HStack {
-                Text("Zadejte čísla stránek oddělená čárkou".localized + ":")
-                    .frame(width: 90, alignment: .leading)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                TextField("2,4,5,6", text: $skipPages)
-                    .textFieldStyle(RoundedBorderTextFieldStyle())
-                    .frame(width: 140)
-                    .focused($isSkipPagesFocused)
-            }
+        HStack {
+            Text("Čísla stránek".localized + ":")
+                .frame(width: 90, alignment: .leading)
+                .font(.caption)
+                .foregroundColor(.secondary)
+            TextField("2,4,5,6", text: $skipPages)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .frame(width: 140)
+                .focused($isSkipPagesFocused)
         }
-        .frame(width: 300, height: 120) // Pevná šířka a výška
-        .padding(16)
-        .background(Color.blue.opacity(0.08))
-        .cornerRadius(12)
     }
     
     private var rotationSection: some View {
-        VStack(spacing: 12) {
-            Text("Otočení".localized)
-                .font(.headline)
-                .foregroundColor(.primary)
-            
-            VStack(spacing: 8) {
-                Toggle("Otočit z landscape na portrait".localized, isOn: $rotateToPortrait)
-                    .toggleStyle(SwitchToggleStyle(tint: .green))
-                    .font(.caption)
-                
-                Toggle("Po směru hodinových ručiček".localized, isOn: $rotateClockwise)
-                    .toggleStyle(SwitchToggleStyle(tint: .green))
-                    .font(.caption)
-            }
-        }
-        .frame(width: 300, height: 120) // Pevná šířka a výška
-        .padding(16)
-        .background(Color.green.opacity(0.08))
-        .cornerRadius(12)
-    }
-    
-    private var cuttingSection: some View {
-        VStack(spacing: 12) {
-            Text("Řezání".localized)
-                .font(.headline)
-                .foregroundColor(.primary)
-            
-            Toggle("Vypnout řezání".localized, isOn: $disableCutting)
-                .toggleStyle(SwitchToggleStyle(tint: .orange))
+        VStack(spacing: 8) {
+            Toggle("Po směru hodinových ručiček".localized, isOn: $rotateClockwise)
+                .toggleStyle(SwitchToggleStyle(tint: .green))
                 .font(.caption)
         }
-        .frame(width: 300, height: 120) // Pevná šířka a výška
-        .padding(16)
-        .background(Color.orange.opacity(0.08))
-        .cornerRadius(12)
     }
+    
     
     private var openPDFButton: some View {
         Button("Otevřít PDF".localized) {
@@ -197,7 +246,7 @@ struct ContentView: View {
     
     private func printSection(doc: PDFDocument) -> some View {
         VStack(spacing: 12) {
-            Text("Počet stránek".localized + ": \(pageCount)")
+            Text("Počet stránek".localized + ": \(finalPageCount)")
                 .font(.caption)
                 .foregroundColor(.secondary)
             
@@ -276,6 +325,17 @@ struct ContentView: View {
             saveSettings()
             regeneratePDF()
         }
+        .onChange(of: rotationEnabled) { _ in
+            saveSettings()
+            regeneratePDF()
+        }
+        .onChange(of: cuttingEnabled) { _ in
+            saveSettings()
+            regeneratePDF()
+        }
+        .onChange(of: skipPagesEnabled) { _ in
+            saveSettings()
+        }
         .fileImporter(
             isPresented: $isImporterPresented,
             allowedContentTypes: [UTType.pdf],
@@ -328,9 +388,9 @@ struct ContentView: View {
     private func printDocument(_ document: PDFDocument) {
         print("🖨️ Otevírám tiskový dialog s aplikováním filtru vynechání stránek...")
         
-        // Aplikujeme filtr vynechání stránek stejně jako při ukládání
-        let skipPagesList = parseSkipPages()
-        print("📄 Seznam vynechaných stránek: \(skipPagesList)")
+        // Aplikujeme filtr vynechání stránek pouze pokud je skipPagesEnabled
+        let skipPagesList = skipPagesEnabled ? parseSkipPages() : []
+        print("📄 Seznam vynechaných stránek: \(skipPagesList) (skipPagesEnabled: \(skipPagesEnabled))")
         
         let filteredDocument = PDFDocument()
         var finalPageIndex = 0
@@ -405,6 +465,9 @@ struct ContentView: View {
         UserDefaults.standard.set(rotateToPortrait, forKey: rotateToPortraitKey)
         UserDefaults.standard.set(disableCutting, forKey: disableCuttingKey)
         UserDefaults.standard.set(rotateClockwise, forKey: rotateClockwiseKey)
+        UserDefaults.standard.set(rotationEnabled, forKey: rotationEnabledKey)
+        UserDefaults.standard.set(cuttingEnabled, forKey: cuttingEnabledKey)
+        UserDefaults.standard.set(skipPagesEnabled, forKey: skipPagesEnabledKey)
         print("💾 Nastavení uložena")
     }
     
@@ -416,6 +479,9 @@ struct ContentView: View {
         rotateToPortrait = UserDefaults.standard.object(forKey: rotateToPortraitKey) as? Bool ?? true
         disableCutting = UserDefaults.standard.object(forKey: disableCuttingKey) as? Bool ?? false
         rotateClockwise = UserDefaults.standard.object(forKey: rotateClockwiseKey) as? Bool ?? true
+        rotationEnabled = UserDefaults.standard.object(forKey: rotationEnabledKey) as? Bool ?? true
+        cuttingEnabled = UserDefaults.standard.object(forKey: cuttingEnabledKey) as? Bool ?? true
+        skipPagesEnabled = UserDefaults.standard.object(forKey: skipPagesEnabledKey) as? Bool ?? true
         print("📂 Nastavení načtena")
     }
     
@@ -436,7 +502,12 @@ struct ContentView: View {
         print("📊 Aktuální nastavení: hShift=\(horizontalShift), vShift=\(verticalShift), skip=\(skipPages), rotate=\(rotateToPortrait), disable=\(disableCutting), clockwise=\(rotateClockwise)")
         
         // Pro preview nepoužíváme vynechání stránek - zobrazíme všechny stránky
-        if let processed = PDFCutter.cutToA6(document: original, horizontalShift: horizontalShift, verticalShift: verticalShift, skipPages: [], rotateToPortrait: rotateToPortrait, disableCutting: disableCutting, rotateClockwise: rotateClockwise) {
+        // Použijeme enable/disable stavy místo původních toggleů
+        let effectiveRotateToPortrait = rotationEnabled ? rotateToPortrait : false
+        let effectiveDisableCutting = cuttingEnabled ? disableCutting : true  // Pokud je cutting disabled, pak je řezání vypnuto
+        let effectiveRotateClockwise = rotationEnabled ? rotateClockwise : true
+        
+        if let processed = PDFCutter.cutToA6(document: original, horizontalShift: horizontalShift, verticalShift: verticalShift, skipPages: [], rotateToPortrait: effectiveRotateToPortrait, disableCutting: effectiveDisableCutting, rotateClockwise: effectiveRotateClockwise) {
             print("✅ PDF úspěšně regenerován s novými nastaveními (bez vynechání), nový počet stránek: \(processed.pageCount)")
             
             // Aktualizuj UI na hlavním vlákně
