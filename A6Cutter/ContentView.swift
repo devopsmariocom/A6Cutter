@@ -11,6 +11,7 @@ import AppKit
 struct ContentView: View {
     @State private var isImporterPresented = false
     @State private var isSaverPresented = false
+    @State private var isPreviewPresented = false
     @State private var cutDocument: PDFDocument?
     @State private var originalDocument: PDFDocument?
     @State private var pageCount: Int = 0
@@ -189,11 +190,19 @@ struct ContentView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
             
-            Button("Uložit PDF") {
-                savePDF(doc)
+            HStack(spacing: 8) {
+                Button("Uložit PDF") {
+                    savePDF(doc)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.regular)
+                
+                Button("Náhled v Preview") {
+                    previewInPreview(doc)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.regular)
             }
-            .buttonStyle(.bordered)
-            .controlSize(.regular)
         }
     }
     
@@ -316,6 +325,58 @@ struct ContentView: View {
     
     private func savePDF(_ document: PDFDocument) {
         isSaverPresented = true
+    }
+    
+    private func previewInPreview(_ document: PDFDocument) {
+        print("👁️ Otevírám PDF v Preview s aplikováním filtru vynechání stránek...")
+        
+        // Aplikujeme stejný filtr jako při ukládání
+        let skipPagesList = parseSkipPages()
+        let filteredDocument = PDFDocument()
+        var finalPageIndex = 0
+        
+        for pageIndex in 0..<document.pageCount {
+            finalPageIndex += 1
+            
+            // Skip pages based on user input (čísla stránek v konečném výsledku)
+            if skipPagesList.contains(finalPageIndex) {
+                print("⏭️ Přeskakuji stránku \(finalPageIndex) v preview")
+                continue
+            }
+            
+            if let page = document.page(at: pageIndex) {
+                filteredDocument.insert(page, at: filteredDocument.pageCount)
+                print("✅ Přidána stránka \(finalPageIndex) do preview")
+            }
+        }
+        
+        print("📄 Preview bude obsahovat \(filteredDocument.pageCount) stránek (původně \(document.pageCount))")
+        
+        // Vytvoříme dočasný soubor
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent("A6Cutter_Preview_\(UUID().uuidString).pdf")
+        
+        do {
+            // Uložíme filtrované PDF do dočasného souboru
+            guard let data = filteredDocument.dataRepresentation() else {
+                print("❌ Nelze získat data z filtrovaného PDF dokumentu")
+                return
+            }
+            try data.write(to: tempURL)
+            
+            print("✅ Filtrované PDF uloženo do dočasného souboru: \(tempURL.path)")
+            
+            // Otevřeme v Preview
+            NSWorkspace.shared.open(tempURL)
+            
+            // Smažeme dočasný soubor po 30 sekundách
+            DispatchQueue.main.asyncAfter(deadline: .now() + 30) {
+                try? FileManager.default.removeItem(at: tempURL)
+                print("🗑️ Dočasný soubor smazán: \(tempURL.path)")
+            }
+            
+        } catch {
+            print("❌ Chyba při ukládání filtrovaného PDF pro preview: \(error)")
+        }
     }
     
     // Funkce pro ukládání nastavení
