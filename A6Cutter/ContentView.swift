@@ -40,122 +40,150 @@ struct ContentView: View {
     @State private var rotateClockwise: Bool = true
     
     var body: some View {
-        VStack(spacing: 16) {
-            Text("A6Cutter")
-                .font(.largeTitle)
-                .bold()
-            
-            // Nastavení posunutí řezů
+        HStack(spacing: 16) {
+            // Levá strana - uživatelské vstupy
             VStack(spacing: 12) {
-                Text("Nastavení posunutí řezů")
-                    .font(.headline)
+                Text("A6Cutter")
+                    .font(.largeTitle)
+                    .bold()
                 
-                HStack {
-                    Text("Horizontální posun:")
-                        .frame(width: 120, alignment: .leading)
-                    Slider(value: $horizontalShift, in: -100...100, step: 5)
-                    Text("\(Int(horizontalShift))")
-                        .frame(width: 40)
-                }
-                
-                HStack {
-                    Text("Vertikální posun:")
-                        .frame(width: 120, alignment: .leading)
-                    Slider(value: $verticalShift, in: -100...100, step: 5)
-                    Text("\(Int(verticalShift))")
-                        .frame(width: 40)
-                }
-            }
-            .padding()
-            .background(Color.gray.opacity(0.1))
-            .cornerRadius(8)
-            
-            // Nastavení vynechání stránek
-            VStack(spacing: 12) {
-                Text("Nastavení vynechání stránek")
-                    .font(.headline)
-                
-                HStack {
-                    Text("Vynechat stránky:")
-                        .frame(width: 120, alignment: .leading)
-                    TextField("2,4,5,6", text: $skipPages)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .frame(width: 150)
-                }
-                
-                Text("Zadejte čísla stránek oddělená čárkou (např. 2,4,5,6)")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            .padding()
-            .background(Color.blue.opacity(0.1))
-            .cornerRadius(8)
-            
-            // Nastavení otočení
-            VStack(spacing: 12) {
-                Text("Nastavení otočení")
-                    .font(.headline)
-                
-                HStack {
-                    Toggle("Otočit z landscape na portrait", isOn: $rotateToPortrait)
-                        .toggleStyle(SwitchToggleStyle())
-                }
-                
-                HStack {
-                    Toggle("Otočit po směru hodinových ručiček", isOn: $rotateClockwise)
-                        .toggleStyle(SwitchToggleStyle())
-                }
-                
-                Text("Automaticky otočí landscape PDF na portrait před řezáním")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            .padding()
-            .background(Color.green.opacity(0.1))
-            .cornerRadius(8)
-            
-            // Nastavení vypnutí řezání
-            VStack(spacing: 12) {
-                Text("Nastavení řezání")
-                    .font(.headline)
-                
-                HStack {
-                    Toggle("Vypnout řezání (pouze otočení)", isOn: $disableCutting)
-                        .toggleStyle(SwitchToggleStyle())
-                }
-                
-                Text("Pouze otočí PDF bez řezání na A6 dlaždice")
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-            }
-            .padding()
-            .background(Color.orange.opacity(0.1))
-            .cornerRadius(8)
-            
-            Button("Otevřít PDF") {
-                isImporterPresented = true
-            }
-            if let doc = cutDocument {
-                Text("Počet A6 stránek: \(pageCount)")
-            }
-            HStack {
-                Button("Uložit PDF") {
-                    if let doc = cutDocument {
-                        savePDF(doc)
+                // Nastavení posunutí řezů
+                VStack(spacing: 8) {
+                    Text("Posunutí řezů")
+                        .font(.headline)
+                    
+                    HStack {
+                        Text("Horizontální:")
+                            .frame(width: 80, alignment: .leading)
+                            .font(.caption)
+                        Slider(value: $horizontalShift, in: -100...100, step: 5)
+                        Text("\(Int(horizontalShift))")
+                            .frame(width: 30)
+                            .font(.caption)
+                    }
+                    
+                    HStack {
+                        Text("Vertikální:")
+                            .frame(width: 80, alignment: .leading)
+                            .font(.caption)
+                        Slider(value: $verticalShift, in: -100...100, step: 5)
+                        Text("\(Int(verticalShift))")
+                            .frame(width: 30)
+                            .font(.caption)
                     }
                 }
-                .disabled(cutDocument == nil)
+                .padding(8)
+                .background(Color.gray.opacity(0.1))
+                .cornerRadius(6)
+                
+                // Nastavení vynechání stránek
+                VStack(spacing: 8) {
+                    Text("Vynechání stránek")
+                        .font(.headline)
+                    
+                    HStack {
+                        Text("Vynechat:")
+                            .frame(width: 80, alignment: .leading)
+                            .font(.caption)
+                        TextField("2,4,5,6", text: $skipPages)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .frame(width: 120)
+                    }
+                }
+                .padding(8)
+                .background(Color.blue.opacity(0.1))
+                .cornerRadius(6)
+                
+                // Nastavení otočení
+                VStack(spacing: 8) {
+                    Text("Otočení")
+                        .font(.headline)
+                    
+                    Toggle("Landscape → Portrait", isOn: $rotateToPortrait)
+                        .toggleStyle(SwitchToggleStyle())
+                        .font(.caption)
+                    
+                    Toggle("Po směru hodinových ručiček", isOn: $rotateClockwise)
+                        .toggleStyle(SwitchToggleStyle())
+                        .font(.caption)
+                }
+                .padding(8)
+                .background(Color.green.opacity(0.1))
+                .cornerRadius(6)
+                
+                // Nastavení řezání
+                VStack(spacing: 8) {
+                    Text("Řezání")
+                        .font(.headline)
+                    
+                    Toggle("Vypnout řezání", isOn: $disableCutting)
+                        .toggleStyle(SwitchToggleStyle())
+                        .font(.caption)
+                }
+                .padding(8)
+                .background(Color.orange.opacity(0.1))
+                .cornerRadius(6)
+                
+                Button("Otevřít PDF") {
+                    isImporterPresented = true
+                }
+                .buttonStyle(.borderedProminent)
+                
+                if let doc = cutDocument {
+                    Text("Počet stránek: \(pageCount)")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    
+                    Button("Uložit PDF") {
+                        savePDF(doc)
+                    }
+                    .buttonStyle(.bordered)
+                }
             }
+            .frame(width: 280)
+            
+            // Pravá strana - preview
+            VStack(spacing: 12) {
+                Text("Náhled výsledku")
+                    .font(.headline)
+                
+                if let doc = cutDocument {
+                    PDFThumbnailsView(document: doc)
+                        .id("pdf-thumbnails-\(doc.pageCount)-\(horizontalShift)-\(verticalShift)")
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .background(Color.gray.opacity(0.1))
+                        .cornerRadius(8)
+                } else {
+                    VStack {
+                        Image(systemName: "doc.text")
+                            .font(.system(size: 48))
+                            .foregroundColor(.gray)
+                        Text("Žádný PDF není načten")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.gray.opacity(0.1))
+                    .cornerRadius(8)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .padding()
         .onAppear {
             loadSettings()
+            // Regeneruj PDF pouze pokud je již načten
+            if originalDocument != nil {
+                regeneratePDF()
+            }
         }
-        .onChange(of: horizontalShift) { _ in
+        .onChange(of: horizontalShift) { newValue in
+            print("🔄 Horizontální posun změněn na: \(newValue)")
             saveSettings()
             regeneratePDF()
         }
-        .onChange(of: verticalShift) { _ in
+        .onChange(of: verticalShift) { newValue in
+            print("🔄 Vertikální posun změněn na: \(newValue)")
             saveSettings()
             regeneratePDF()
         }
@@ -258,9 +286,13 @@ struct ContentView: View {
     
     // Funkce pro regeneraci PDF při změně nastavení
     private func regeneratePDF() {
-        guard let original = originalDocument else { return }
+        guard let original = originalDocument else { 
+            print("⚠️ Regenerace PDF přeskočena - žádný původní dokument")
+            return 
+        }
         
         print("🔄 Regeneruji PDF s novými nastaveními...")
+        print("📊 Aktuální nastavení: hShift=\(horizontalShift), vShift=\(verticalShift), skip=\(skipPages), rotate=\(rotateToPortrait), disable=\(disableCutting), clockwise=\(rotateClockwise)")
         
         // Parse skip pages from string
         let skipPagesList = skipPages.components(separatedBy: ",")
@@ -268,8 +300,15 @@ struct ContentView: View {
         
         if let processed = PDFCutter.cutToA6(document: original, horizontalShift: horizontalShift, verticalShift: verticalShift, skipPages: skipPagesList, rotateToPortrait: rotateToPortrait, disableCutting: disableCutting, rotateClockwise: rotateClockwise) {
             print("✅ PDF úspěšně regenerován s novými nastaveními, nový počet stránek: \(processed.pageCount)")
-            cutDocument = processed
-            pageCount = processed.pageCount
+            
+            // Aktualizuj UI na hlavním vlákně
+            DispatchQueue.main.async {
+                print("🔄 Před aktualizací - cutDocument: \(self.cutDocument?.pageCount ?? 0) stránek")
+                self.cutDocument = processed
+                self.pageCount = processed.pageCount
+                print("🔄 Po aktualizaci - cutDocument: \(self.cutDocument?.pageCount ?? 0) stránek")
+                print("🔄 UI aktualizováno - cutDocument a pageCount nastaveny")
+            }
         } else {
             print("❌ Chyba při regeneraci PDF")
         }
@@ -340,5 +379,104 @@ internal struct PrintHelper {
             print("❌ Chyba při ukládání PDF: \(error.localizedDescription)")
         }
         #endif
+    }
+}
+
+// Thumbnaily PDF komponenta
+struct PDFThumbnailsView: View {
+    let document: PDFDocument
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Text("Náhled všech stránek (\(document.pageCount))")
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .onAppear {
+                    print("🔄 PDFThumbnailsView se aktualizuje - počet stránek: \(document.pageCount)")
+                }
+            
+            ScrollView(.horizontal, showsIndicators: true) {
+                HStack(spacing: 8) {
+                    ForEach(0..<document.pageCount, id: \.self) { pageIndex in
+                        VStack(spacing: 4) {
+                            if let page = document.page(at: pageIndex) {
+                                PDFThumbnailView(page: page)
+                                    .frame(width: 120, height: 160)
+                                    .background(Color.white)
+                                    .cornerRadius(6)
+                                    .shadow(radius: 2)
+                            } else {
+                                Rectangle()
+                                    .fill(Color.gray.opacity(0.3))
+                                    .frame(width: 120, height: 160)
+                                    .cornerRadius(6)
+                            }
+                            
+                            Text("Str. \(pageIndex + 1)")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                }
+                .padding(.horizontal, 8)
+            }
+        }
+    }
+}
+
+// PDF thumbnail náhled
+struct PDFThumbnailView: View {
+    let page: PDFPage
+    
+    var body: some View {
+        PDFThumbnailRepresentable(page: page)
+    }
+}
+
+// PDF stránka náhled
+struct PDFPageView: View {
+    let page: PDFPage
+    
+    var body: some View {
+        PDFPageRepresentable(page: page)
+    }
+}
+
+// PDF thumbnail reprezentace pro macOS
+struct PDFThumbnailRepresentable: NSViewRepresentable {
+    let page: PDFPage
+    
+    func makeNSView(context: Context) -> PDFView {
+        let pdfView = PDFView()
+        pdfView.document = PDFDocument()
+        pdfView.document?.insert(page, at: 0)
+        pdfView.autoScales = true
+        pdfView.displayMode = .singlePage
+        pdfView.displayDirection = .vertical
+        pdfView.scaleFactor = 0.3 // Menší velikost pro thumbnaily
+        return pdfView
+    }
+    
+    func updateNSView(_ nsView: PDFView, context: Context) {
+        // Aktualizace není potřeba, stránka se nemění
+    }
+}
+
+// PDF stránka reprezentace pro macOS
+struct PDFPageRepresentable: NSViewRepresentable {
+    let page: PDFPage
+    
+    func makeNSView(context: Context) -> PDFView {
+        let pdfView = PDFView()
+        pdfView.document = PDFDocument()
+        pdfView.document?.insert(page, at: 0)
+        pdfView.autoScales = true
+        pdfView.displayMode = .singlePage
+        pdfView.displayDirection = .vertical
+        return pdfView
+    }
+    
+    func updateNSView(_ nsView: PDFView, context: Context) {
+        // Aktualizace není potřeba, stránka se nemění
     }
 }
