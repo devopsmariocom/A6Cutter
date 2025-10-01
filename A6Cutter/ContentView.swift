@@ -187,10 +187,10 @@ struct ContentView: View {
             saveSettings()
             regeneratePDF()
         }
-        .onChange(of: skipPages) { _ in
-            saveSettings()
-            regeneratePDF()
-        }
+                .onChange(of: skipPages) { _ in
+                    saveSettings()
+                    // Preview se neaktualizuje při změně vynechání stránek - filter se aplikuje pouze při ukládání
+                }
         .onChange(of: rotateToPortrait) { _ in
             saveSettings()
             regeneratePDF()
@@ -245,7 +245,7 @@ struct ContentView: View {
         )
         .fileExporter(
             isPresented: $isSaverPresented,
-            document: cutDocument != nil ? PDFDocumentWrapper(document: cutDocument!) : nil,
+            document: cutDocument != nil ? PDFDocumentWrapper(document: cutDocument!, skipPages: skipPages.components(separatedBy: ",").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }) : nil,
             contentType: .pdf,
             defaultFilename: "A6Cutter_Output"
         ) { result in
@@ -284,22 +284,19 @@ struct ContentView: View {
         print("📂 Nastavení načtena")
     }
     
-    // Funkce pro regeneraci PDF při změně nastavení
+    // Funkce pro regeneraci PDF při změně nastavení (bez vynechání stránek pro preview)
     private func regeneratePDF() {
         guard let original = originalDocument else { 
             print("⚠️ Regenerace PDF přeskočena - žádný původní dokument")
             return 
         }
         
-        print("🔄 Regeneruji PDF s novými nastaveními...")
+        print("🔄 Regeneruji PDF s novými nastaveními (bez vynechání stránek pro preview)...")
         print("📊 Aktuální nastavení: hShift=\(horizontalShift), vShift=\(verticalShift), skip=\(skipPages), rotate=\(rotateToPortrait), disable=\(disableCutting), clockwise=\(rotateClockwise)")
         
-        // Parse skip pages from string
-        let skipPagesList = skipPages.components(separatedBy: ",")
-            .compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
-        
-        if let processed = PDFCutter.cutToA6(document: original, horizontalShift: horizontalShift, verticalShift: verticalShift, skipPages: skipPagesList, rotateToPortrait: rotateToPortrait, disableCutting: disableCutting, rotateClockwise: rotateClockwise) {
-            print("✅ PDF úspěšně regenerován s novými nastaveními, nový počet stránek: \(processed.pageCount)")
+        // Pro preview nepoužíváme vynechání stránek - zobrazíme všechny stránky
+        if let processed = PDFCutter.cutToA6(document: original, horizontalShift: horizontalShift, verticalShift: verticalShift, skipPages: [], rotateToPortrait: rotateToPortrait, disableCutting: disableCutting, rotateClockwise: rotateClockwise) {
+            print("✅ PDF úspěšně regenerován s novými nastaveními (bez vynechání), nový počet stránek: \(processed.pageCount)")
             
             // Aktualizuj UI na hlavním vlákně
             DispatchQueue.main.async {
@@ -319,9 +316,11 @@ struct PDFDocumentWrapper: FileDocument {
     static var readableContentTypes: [UTType] { [.pdf] }
     
     let document: PDFDocument
+    let skipPages: [Int]
     
-    init(document: PDFDocument) {
+    init(document: PDFDocument, skipPages: [Int] = []) {
         self.document = document
+        self.skipPages = skipPages
     }
     
     init(configuration: ReadConfiguration) throws {
@@ -329,7 +328,26 @@ struct PDFDocumentWrapper: FileDocument {
     }
     
     func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
-        guard let data = document.dataRepresentation() else {
+        // Aplikuj filter vynechání stránek při ukládání
+        let filteredDocument = PDFDocument()
+        var finalPageIndex = 0
+        
+        for pageIndex in 0..<document.pageCount {
+            finalPageIndex += 1
+            
+            // Skip pages based on user input (čísla stránek v konečném výsledku)
+            if skipPages.contains(finalPageIndex) {
+                print("⏭️ Přeskakuji stránku \(finalPageIndex) při ukládání")
+                continue
+            }
+            
+            if let page = document.page(at: pageIndex) {
+                filteredDocument.insert(page, at: filteredDocument.pageCount)
+                print("✅ Přidána stránka \(finalPageIndex) do uloženého PDF")
+            }
+        }
+        
+        guard let data = filteredDocument.dataRepresentation() else {
             throw CocoaError(.fileWriteInvalidFileName)
         }
         return FileWrapper(regularFileWithContents: data)
@@ -405,6 +423,7 @@ struct PDFThumbnailsView: View {
                                     .background(Color.white)
                                     .cornerRadius(6)
                                     .shadow(radius: 2)
+                                    .clipped() // Přidej clipped() pro bezpečnost
                             } else {
                                 Rectangle()
                                     .fill(Color.gray.opacity(0.3))
@@ -420,6 +439,10 @@ struct PDFThumbnailsView: View {
                 }
                 .padding(.horizontal, 8)
             }
+        }
+        .onDisappear {
+            // Vyčisti resources při zmizení view
+            print("🧹 PDFThumbnailsView se ukončuje")
         }
     }
 }
@@ -448,17 +471,33 @@ struct PDFThumbnailRepresentable: NSViewRepresentable {
     
     func makeNSView(context: Context) -> PDFView {
         let pdfView = PDFView()
-        pdfView.document = PDFDocument()
-        pdfView.document?.insert(page, at: 0)
+        
+        // Vytvoř nový dokument s jednou stránkou
+        let document = PDFDocument()
+        document.insert(page, at: 0)
+        pdfView.document = document
+        
+        // Nastav vlastnosti pro thumbnail
         pdfView.autoScales = true
         pdfView.displayMode = .singlePage
         pdfView.displayDirection = .vertical
         pdfView.scaleFactor = 0.3 // Menší velikost pro thumbnaily
+        
+        // Zakázat interakce pro thumbnaily
+        pdfView.allowsDragging = false
+        
         return pdfView
     }
     
     func updateNSView(_ nsView: PDFView, context: Context) {
         // Aktualizace není potřeba, stránka se nemění
+        // Ale ujistíme se, že je PDFView stále platný
+        if nsView.document == nil {
+            // Pokud se dokument ztratil, znovu ho vytvoř
+            let document = PDFDocument()
+            document.insert(page, at: 0)
+            nsView.document = document
+        }
     }
 }
 

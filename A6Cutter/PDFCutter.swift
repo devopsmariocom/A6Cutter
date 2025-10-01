@@ -101,11 +101,7 @@ enum PDFCutter {
                 for col in 0..<cols {
                     tileIndex += 1
                     
-                    // Skip pages based on user input
-                    if skipPages.contains(tileIndex) {
-                        print("⏭️ Přeskakuji stránku \(tileIndex)")
-                        continue
-                    }
+                    // Poznámka: Vynechání stránek se provádí až po řezání v KROKU 3
                     
                     let cropRect = CGRect(
                         x: pageRect.minX + CGFloat(col) * a6WidthPts + CGFloat(horizontalShift),
@@ -126,16 +122,16 @@ enum PDFCutter {
             }
         }
         
-        // KROK 3: Aplikujeme vynechání stránek na konečný výsledek
+        // KROK 3: Aplikujeme vynechání stránek na konečný výsledek (PO ŘEZÁNÍ)
         if !skipPages.isEmpty {
-            print("⏭️ KROK 3: Aplikuji vynechání stránek na konečný výsledek")
+            print("⏭️ KROK 3: Aplikuji vynechání stránek na konečný výsledek (PO ŘEZÁNÍ)")
             let finalDocument = PDFDocument()
             var finalPageIndex = 0
             
             for pageIndex in 0..<outputDocument.pageCount {
                 finalPageIndex += 1
                 
-                // Skip pages based on user input
+                // Skip pages based on user input (čísla stránek v konečném výsledku)
                 if skipPages.contains(finalPageIndex) {
                     print("⏭️ Přeskakuji stránku \(finalPageIndex) v konečném výsledku")
                     continue
