@@ -1,59 +1,86 @@
-//
-//  ContentView.swift
-//  A6Cutter
-//
-//  Created by Mario Vejlupek on 01.10.2025.
-//
-
 import SwiftUI
-import SwiftData
+import PDFKit
+import UniformTypeIdentifiers
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
-
+    @State private var isImporterPresented = false
+    @State private var cutDocument: PDFDocument?
+    @State private var pageCount: Int = 0
+    
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+        VStack(spacing: 16) {
+            Text("A6Cutter")
+                .font(.largeTitle)
+                .bold()
+            Button("Otevřít PDF") {
+                isImporterPresented = true
+            }
+            if let doc = cutDocument {
+                Text("Počet A6 stránek: \(pageCount)")
+            }
+            HStack {
+                Button("Tisk") {
+                    if let doc = cutDocument {
+                        PrintHelper.print(document: doc)
                     }
                 }
-                .onDelete(perform: deleteItems)
+                .disabled(cutDocument == nil)
             }
-            .navigationSplitViewColumnWidth(min: 180, ideal: 200)
-            .toolbar {
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
+        }
+        .padding()
+        .fileImporter(
+            isPresented: $isImporterPresented,
+            allowedContentTypes: [UTType.pdf],
+            onCompletion: { result in
+                switch result {
+                case .success(let url):
+                    if let originalDocument = PDFDocument(url: url) {
+                        let processed = PDFCutter.cutToA6(document: originalDocument)
+                        cutDocument = processed
+                        pageCount = processed.pageCount
                     }
+                case .failure:
+                    break
                 }
             }
-        } detail: {
-            Text("Select an item")
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
-        }
+        )
     }
 }
 
-#Preview {
-    ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
+internal struct PrintHelper {
+#if os(iOS)
+    import UIKit
+#elseif os(macOS)
+    import AppKit
+#endif
+    
+    static func print(document: PDFDocument) {
+        guard let data = document.dataRepresentation() else {
+            return
+        }
+        
+        #if os(iOS)
+        let printController = UIPrintInteractionController.shared
+        let printInfo = UIPrintInfo(dictionary: nil)
+        printInfo.outputType = .general
+        printInfo.jobName = "PDF Print"
+        printController.printInfo = printInfo
+        printController.printingItem = data
+        printController.present(animated: true, completionHandler: nil)
+        #elseif os(macOS)
+        let pdfView = PDFView(frame: .zero)
+        pdfView.document = document
+        let printOperation = NSPrintOperation(view: pdfView)
+        printOperation.showsPrintPanel = true
+        printOperation.showsProgressPanel = true
+        printOperation.run()
+        #endif
+    }
+}
+
+// Dummy PDFCutter implementation for compilation
+struct PDFCutter {
+    static func cutToA6(document: PDFDocument) -> PDFDocument {
+        return document
+    }
 }
