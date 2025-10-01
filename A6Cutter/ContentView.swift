@@ -225,13 +225,17 @@ struct ContentView: View {
         }
         .padding(24)
         .background(Color(NSColor.controlBackgroundColor))
-        .onAppear {
-            loadSettings()
-            // Regeneruj PDF pouze pokud je již načten
-            if originalDocument != nil {
-                regeneratePDF()
-            }
-        }
+                .onAppear {
+                    loadSettings()
+                    // Regeneruj PDF pouze pokud je již načten
+                    if originalDocument != nil {
+                        regeneratePDF()
+                    }
+                    // Automaticky zobraz dialog pro výběr PDF při otevření aplikace
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        isImporterPresented = true
+                    }
+                }
         .onChange(of: horizontalShift) { newValue in
             print("🔄 Horizontální posun změněn na: \(newValue)")
             saveSettings()
