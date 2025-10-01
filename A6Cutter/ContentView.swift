@@ -461,39 +461,50 @@ struct PDFThumbnailsView: View {
     let document: PDFDocument
     
     var body: some View {
-        VStack(spacing: 8) {
-            Text("Náhled všech stránek (\(document.pageCount))")
-                .font(.caption)
-                .foregroundColor(.secondary)
-                .onAppear {
-                    print("🔄 PDFThumbnailsView se aktualizuje - počet stránek: \(document.pageCount)")
-                }
+        GeometryReader { geometry in
+            let availableWidth = geometry.size.width
+            let availableHeight = geometry.size.height
             
-            ScrollView(.horizontal, showsIndicators: true) {
-                HStack(spacing: 8) {
-                    ForEach(0..<document.pageCount, id: \.self) { pageIndex in
-                        VStack(spacing: 4) {
-                            if let page = document.page(at: pageIndex) {
-                                PDFThumbnailView(page: page)
-                                    .frame(width: 120, height: 160)
-                                    .background(Color.white)
-                                    .cornerRadius(6)
-                                    .shadow(radius: 2)
-                                    .clipped() // Přidej clipped() pro bezpečnost
-                            } else {
-                                Rectangle()
-                                    .fill(Color.gray.opacity(0.3))
-                                    .frame(width: 120, height: 160)
-                                    .cornerRadius(6)
+            VStack(spacing: 8) {
+                Text("Náhled všech stránek (\(document.pageCount))")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .onAppear {
+                        print("🔄 PDFThumbnailsView se aktualizuje - počet stránek: \(document.pageCount)")
+                    }
+                
+                // Dynamicky vypočítáme počet sloupců a velikost thumbnailů - ZVĚTŠENÉ
+                let columns = max(1, Int(availableWidth / 200)) // 200px per thumbnail including spacing (zvětšeno z 140px)
+                let rows = max(1, Int(ceil(Double(document.pageCount) / Double(columns))))
+                let thumbnailWidth = (availableWidth - CGFloat(columns - 1) * 12 - 24) / CGFloat(columns) // 12px spacing, 24px padding (zvětšeno)
+                let thumbnailHeight = min(thumbnailWidth * 1.4, (availableHeight - 50) / CGFloat(rows)) // 1.4 aspect ratio, 50px for text (zvětšeno)
+                
+                ScrollView {
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: columns), spacing: 12) {
+                        ForEach(0..<document.pageCount, id: \.self) { pageIndex in
+                            VStack(spacing: 4) {
+                                if let page = document.page(at: pageIndex) {
+                                    PDFThumbnailView(page: page)
+                                        .frame(width: thumbnailWidth, height: thumbnailHeight)
+                                        .background(Color.white)
+                                        .cornerRadius(6)
+                                        .shadow(radius: 2)
+                                        .clipped()
+                                } else {
+                                    Rectangle()
+                                        .fill(Color.gray.opacity(0.3))
+                                        .frame(width: thumbnailWidth, height: thumbnailHeight)
+                                        .cornerRadius(6)
+                                }
+                                
+                                Text("Str. \(pageIndex + 1)")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
                             }
-                            
-                            Text("Str. \(pageIndex + 1)")
-                                .font(.caption2)
-                                .foregroundColor(.secondary)
                         }
                     }
+                    .padding(.horizontal, 12)
                 }
-                .padding(.horizontal, 8)
             }
         }
         .onDisappear {
