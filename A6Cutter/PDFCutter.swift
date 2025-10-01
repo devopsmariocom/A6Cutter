@@ -4,9 +4,24 @@ import CoreGraphics
 
 enum PDFCutter {
     /// Cut a PDF document into A6 tiles preserving orientation.
-    static func cutToA6(document: PDFDocument) -> PDFDocument? {
-        print("🔧 Začínám řezání PDF na A6...")
+    static func cutToA6(document: PDFDocument, horizontalShift: Double = 0.0, verticalShift: Double = 0.0, skipPages: [Int] = [], rotateToPortrait: Bool = false, disableCutting: Bool = false, rotateClockwise: Bool = true) -> PDFDocument? {
+        print("🔧 Začínám zpracování PDF...")
         let outputDocument = PDFDocument()
+        
+        // KROK 1: Otočení landscape na portrait (pokud je požadováno)
+        if rotateToPortrait {
+            print("🔄 KROK 1: Otočuji landscape stránky na portrait...")
+        }
+        
+        // KROK 2: Řezání stránek (pokud není vypnuto)
+        if disableCutting {
+            print("✂️ KROK 2: Řezání je vypnuto - pouze otočení")
+        } else {
+            print("✂️ KROK 2: Řezání stránek na A6 dlaždice...")
+        }
+        
+        // KROK 3: Vynechání stránek podle filtru
+        print("⏭️ KROK 3: Vynechání stránek podle filtru: \(skipPages)")
         
         // A6 size in mm
         let a6WidthMM: CGFloat = 105
@@ -25,8 +40,27 @@ enum PDFCutter {
                 print("⚠️ Nelze načíst stránku \(pageIndex)")
                 continue 
             }
-            let pageRect = page.bounds(for: .mediaBox)
+            var pageRect = page.bounds(for: .mediaBox)
             print("📐 Stránka \(pageIndex): \(pageRect.width) x \(pageRect.height) bodů")
+            
+            // KROK 1: Rotate landscape pages to portrait if requested
+            if rotateToPortrait && pageRect.width > pageRect.height {
+                let rotationDirection = rotateClockwise ? 90 : -90
+                let directionText = rotateClockwise ? "po směru hodinových ručiček" : "proti směru hodinových ručiček"
+                print("🔄 KROK 1: Otočuji stránku \(pageIndex + 1) z landscape na portrait (\(directionText))")
+                // Rotate the page by 90 degrees in the specified direction
+                page.rotation = (page.rotation + rotationDirection) % 360
+                // Update pageRect after rotation
+                pageRect = page.bounds(for: .mediaBox)
+                print("📐 Po otočení: \(pageRect.width) x \(pageRect.height) bodů")
+            }
+            
+            // KROK 2: Pokud je řezání vypnuto, pouze přidáme stránku
+            if disableCutting {
+                print("✂️ KROK 2: Přidávám stránku \(pageIndex + 1) bez řezání")
+                outputDocument.insert(page, at: outputDocument.pageCount)
+                continue
+            }
             
             // Determine A6 tile size in points
             // For A4 landscape documents, we want landscape A6 tiles (148x105mm)
@@ -57,15 +91,25 @@ enum PDFCutter {
             print("🔲 A6 \(orientation) rozměry: \(a6WidthPts) x \(a6HeightPts) bodů")
             print("📊 Rozdělení: \(cols) x \(rows) dlaždic, velikost dlaždice: \(tileWidth) x \(tileHeight)")
             
-            // Light upward shift for horizontal cut line
-            let lightShift = -40.0 // 20 points upward shift
-            print("📏 Lehký posun nahoru: \(lightShift) bodů")
+            // Parametric shifts for cut lines
+            print("📏 Horizontální posun: \(horizontalShift) bodů")
+            print("📏 Vertikální posun: \(verticalShift) bodů")
+            print("⏭️ Vynechávám stránky: \(skipPages)")
             
+            var tileIndex = 0
             for row in 0..<rows {
                 for col in 0..<cols {
+                    tileIndex += 1
+                    
+                    // Skip pages based on user input
+                    if skipPages.contains(tileIndex) {
+                        print("⏭️ Přeskakuji stránku \(tileIndex)")
+                        continue
+                    }
+                    
                     let cropRect = CGRect(
-                        x: pageRect.minX + CGFloat(col) * a6WidthPts,
-                        y: pageRect.minY + CGFloat(row) * a6HeightPts - lightShift,
+                        x: pageRect.minX + CGFloat(col) * a6WidthPts + CGFloat(horizontalShift),
+                        y: pageRect.minY + CGFloat(row) * a6HeightPts + CGFloat(verticalShift),
                         width: a6WidthPts,
                         height: a6HeightPts
                     )
@@ -77,12 +121,39 @@ enum PDFCutter {
                     }
                     
                     outputDocument.insert(tilePage, at: outputDocument.pageCount)
+                    print("✅ Přidána stránka \(tileIndex)")
                 }
             }
         }
         
+        // KROK 3: Aplikujeme vynechání stránek na konečný výsledek
+        if !skipPages.isEmpty {
+            print("⏭️ KROK 3: Aplikuji vynechání stránek na konečný výsledek")
+            let finalDocument = PDFDocument()
+            var finalPageIndex = 0
+            
+            for pageIndex in 0..<outputDocument.pageCount {
+                finalPageIndex += 1
+                
+                // Skip pages based on user input
+                if skipPages.contains(finalPageIndex) {
+                    print("⏭️ Přeskakuji stránku \(finalPageIndex) v konečném výsledku")
+                    continue
+                }
+                
+                if let page = outputDocument.page(at: pageIndex) {
+                    finalDocument.insert(page, at: finalDocument.pageCount)
+                    print("✅ Přidána stránka \(finalPageIndex) do konečného výsledku")
+                }
+            }
+            
+            let finalPageCount = finalDocument.pageCount
+            print("✅ Dokončeno! Celkem vytvořeno \(finalPageCount) stránek")
+            return finalPageCount > 0 ? finalDocument : nil
+        }
+        
         let finalPageCount = outputDocument.pageCount
-        print("✅ Dokončeno! Celkem vytvořeno \(finalPageCount) A6 stránek")
+        print("✅ Dokončeno! Celkem vytvořeno \(finalPageCount) stránek")
         return finalPageCount > 0 ? outputDocument : nil
     }
     

@@ -12,13 +12,126 @@ struct ContentView: View {
     @State private var isImporterPresented = false
     @State private var isSaverPresented = false
     @State private var cutDocument: PDFDocument?
+    @State private var originalDocument: PDFDocument?
     @State private var pageCount: Int = 0
+    
+    // UserDefaults klíče pro ukládání nastavení
+    private let horizontalShiftKey = "horizontalShift"
+    private let verticalShiftKey = "verticalShift"
+    private let skipPagesKey = "skipPages"
+    private let rotateToPortraitKey = "rotateToPortrait"
+    private let disableCuttingKey = "disableCutting"
+    private let rotateClockwiseKey = "rotateClockwise"
+    
+    // Parametry pro posunutí řezů
+    @State private var horizontalShift: Double = 60.0
+    @State private var verticalShift: Double = 0.0
+    
+    // Parametry pro vynechání stránek
+    @State private var skipPages: String = "2,4,5,6"
+    
+    // Parametr pro otočení z landscape na portrait
+    @State private var rotateToPortrait: Bool = true
+    
+    // Parametr pro vypnutí řezání
+    @State private var disableCutting: Bool = false
+    
+    // Parametr pro směr otáčení
+    @State private var rotateClockwise: Bool = true
     
     var body: some View {
         VStack(spacing: 16) {
             Text("A6Cutter")
                 .font(.largeTitle)
                 .bold()
+            
+            // Nastavení posunutí řezů
+            VStack(spacing: 12) {
+                Text("Nastavení posunutí řezů")
+                    .font(.headline)
+                
+                HStack {
+                    Text("Horizontální posun:")
+                        .frame(width: 120, alignment: .leading)
+                    Slider(value: $horizontalShift, in: -100...100, step: 5)
+                    Text("\(Int(horizontalShift))")
+                        .frame(width: 40)
+                }
+                
+                HStack {
+                    Text("Vertikální posun:")
+                        .frame(width: 120, alignment: .leading)
+                    Slider(value: $verticalShift, in: -100...100, step: 5)
+                    Text("\(Int(verticalShift))")
+                        .frame(width: 40)
+                }
+            }
+            .padding()
+            .background(Color.gray.opacity(0.1))
+            .cornerRadius(8)
+            
+            // Nastavení vynechání stránek
+            VStack(spacing: 12) {
+                Text("Nastavení vynechání stránek")
+                    .font(.headline)
+                
+                HStack {
+                    Text("Vynechat stránky:")
+                        .frame(width: 120, alignment: .leading)
+                    TextField("2,4,5,6", text: $skipPages)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .frame(width: 150)
+                }
+                
+                Text("Zadejte čísla stránek oddělená čárkou (např. 2,4,5,6)")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding()
+            .background(Color.blue.opacity(0.1))
+            .cornerRadius(8)
+            
+            // Nastavení otočení
+            VStack(spacing: 12) {
+                Text("Nastavení otočení")
+                    .font(.headline)
+                
+                HStack {
+                    Toggle("Otočit z landscape na portrait", isOn: $rotateToPortrait)
+                        .toggleStyle(SwitchToggleStyle())
+                }
+                
+                HStack {
+                    Toggle("Otočit po směru hodinových ručiček", isOn: $rotateClockwise)
+                        .toggleStyle(SwitchToggleStyle())
+                }
+                
+                Text("Automaticky otočí landscape PDF na portrait před řezáním")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding()
+            .background(Color.green.opacity(0.1))
+            .cornerRadius(8)
+            
+            // Nastavení vypnutí řezání
+            VStack(spacing: 12) {
+                Text("Nastavení řezání")
+                    .font(.headline)
+                
+                HStack {
+                    Toggle("Vypnout řezání (pouze otočení)", isOn: $disableCutting)
+                        .toggleStyle(SwitchToggleStyle())
+                }
+                
+                Text("Pouze otočí PDF bez řezání na A6 dlaždice")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+            }
+            .padding()
+            .background(Color.orange.opacity(0.1))
+            .cornerRadius(8)
+            
             Button("Otevřít PDF") {
                 isImporterPresented = true
             }
@@ -35,6 +148,33 @@ struct ContentView: View {
             }
         }
         .padding()
+        .onAppear {
+            loadSettings()
+        }
+        .onChange(of: horizontalShift) { _ in
+            saveSettings()
+            regeneratePDF()
+        }
+        .onChange(of: verticalShift) { _ in
+            saveSettings()
+            regeneratePDF()
+        }
+        .onChange(of: skipPages) { _ in
+            saveSettings()
+            regeneratePDF()
+        }
+        .onChange(of: rotateToPortrait) { _ in
+            saveSettings()
+            regeneratePDF()
+        }
+        .onChange(of: disableCutting) { _ in
+            saveSettings()
+            regeneratePDF()
+        }
+        .onChange(of: rotateClockwise) { _ in
+            saveSettings()
+            regeneratePDF()
+        }
         .fileImporter(
             isPresented: $isImporterPresented,
             allowedContentTypes: [UTType.pdf],
@@ -53,7 +193,14 @@ struct ContentView: View {
                     if let originalDocument = PDFDocument(url: url) {
                         print("✅ PDF dokument načten, počet stránek: \(originalDocument.pageCount)")
                         
-                        if let processed = PDFCutter.cutToA6(document: originalDocument) {
+                        // Uložíme původní dokument pro regeneraci
+                        self.originalDocument = originalDocument
+                        
+                        // Parse skip pages from string
+                        let skipPagesList = skipPages.components(separatedBy: ",")
+                            .compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+                        
+                        if let processed = PDFCutter.cutToA6(document: originalDocument, horizontalShift: horizontalShift, verticalShift: verticalShift, skipPages: skipPagesList, rotateToPortrait: rotateToPortrait, disableCutting: disableCutting, rotateClockwise: rotateClockwise) {
                             print("✅ PDF úspěšně rozřezán na A6, nový počet stránek: \(processed.pageCount)")
                             cutDocument = processed
                             pageCount = processed.pageCount
@@ -85,6 +232,47 @@ struct ContentView: View {
     
     private func savePDF(_ document: PDFDocument) {
         isSaverPresented = true
+    }
+    
+    // Funkce pro ukládání nastavení
+    private func saveSettings() {
+        UserDefaults.standard.set(horizontalShift, forKey: horizontalShiftKey)
+        UserDefaults.standard.set(verticalShift, forKey: verticalShiftKey)
+        UserDefaults.standard.set(skipPages, forKey: skipPagesKey)
+        UserDefaults.standard.set(rotateToPortrait, forKey: rotateToPortraitKey)
+        UserDefaults.standard.set(disableCutting, forKey: disableCuttingKey)
+        UserDefaults.standard.set(rotateClockwise, forKey: rotateClockwiseKey)
+        print("💾 Nastavení uložena")
+    }
+    
+    // Funkce pro načítání nastavení
+    private func loadSettings() {
+        horizontalShift = UserDefaults.standard.object(forKey: horizontalShiftKey) as? Double ?? 60.0
+        verticalShift = UserDefaults.standard.object(forKey: verticalShiftKey) as? Double ?? 0.0
+        skipPages = UserDefaults.standard.string(forKey: skipPagesKey) ?? "2,4,5,6"
+        rotateToPortrait = UserDefaults.standard.object(forKey: rotateToPortraitKey) as? Bool ?? true
+        disableCutting = UserDefaults.standard.object(forKey: disableCuttingKey) as? Bool ?? false
+        rotateClockwise = UserDefaults.standard.object(forKey: rotateClockwiseKey) as? Bool ?? true
+        print("📂 Nastavení načtena")
+    }
+    
+    // Funkce pro regeneraci PDF při změně nastavení
+    private func regeneratePDF() {
+        guard let original = originalDocument else { return }
+        
+        print("🔄 Regeneruji PDF s novými nastaveními...")
+        
+        // Parse skip pages from string
+        let skipPagesList = skipPages.components(separatedBy: ",")
+            .compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+        
+        if let processed = PDFCutter.cutToA6(document: original, horizontalShift: horizontalShift, verticalShift: verticalShift, skipPages: skipPagesList, rotateToPortrait: rotateToPortrait, disableCutting: disableCutting, rotateClockwise: rotateClockwise) {
+            print("✅ PDF úspěšně regenerován s novými nastaveními, nový počet stránek: \(processed.pageCount)")
+            cutDocument = processed
+            pageCount = processed.pageCount
+        } else {
+            print("❌ Chyba při regeneraci PDF")
+        }
     }
 }
 
