@@ -28,8 +28,12 @@ struct ContentView: View {
     
     // Computed property pro finální počet stránek po odečtení vynechaných
     private var finalPageCount: Int {
-        let skipPagesList = parseSkipPages()
-        return max(0, pageCount - skipPagesList.count)
+        if skipPagesEnabled {
+            let skipPagesList = parseSkipPages()
+            return max(0, pageCount - skipPagesList.count)
+        } else {
+            return pageCount
+        }
     }
     
     // UserDefaults klíče pro ukládání nastavení
@@ -196,9 +200,9 @@ struct ContentView: View {
 
     private var rightPanel: some View {
         VStack(spacing: 16) {
-            if let doc = cutDocument {
-                PDFThumbnailsView(document: doc, skipPages: parseSkipPages())
-                    .id("pdf-thumbnails-\(doc.pageCount)-\(horizontalShift)-\(verticalShift)")
+                    if let doc = cutDocument {
+                PDFThumbnailsView(document: doc, skipPages: skipPagesEnabled ? parseSkipPages() : [])
+                    .id("pdf-thumbnails-\(doc.pageCount)-\(horizontalShift)-\(verticalShift)-\(skipPagesEnabled)")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color.gray.opacity(0.05))
                     .cornerRadius(12)
@@ -335,6 +339,7 @@ struct ContentView: View {
         }
         .onChange(of: skipPagesEnabled) { _ in
             saveSettings()
+            regeneratePDF()
         }
         .fileImporter(
             isPresented: $isImporterPresented,
