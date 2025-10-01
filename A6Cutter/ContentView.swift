@@ -8,6 +8,13 @@ import UIKit
 import AppKit
 #endif
 
+// MARK: - Localization Helper
+extension String {
+    var localized: String {
+        return NSLocalizedString(self, comment: "")
+    }
+}
+
 struct ContentView: View {
     @State private var isImporterPresented = false
     @State private var isSaverPresented = false
@@ -78,13 +85,13 @@ struct ContentView: View {
     
     private var cutShiftsSection: some View {
         VStack(spacing: 12) {
-            Text("Posunutí řezů")
+            Text("Posunuti rezu".localized)
                 .font(.headline)
                 .foregroundColor(.primary)
             
             VStack(spacing: 8) {
                 HStack {
-                    Text("Horizontální:")
+                    Text("Horizontální posun".localized + ":")
                         .frame(width: 90, alignment: .leading)
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -97,7 +104,7 @@ struct ContentView: View {
                 }
                 
                 HStack {
-                    Text("Vertikální:")
+                    Text("Vertikální posun".localized + ":")
                         .frame(width: 90, alignment: .leading)
                         .font(.caption)
                         .foregroundColor(.secondary)
@@ -118,12 +125,12 @@ struct ContentView: View {
     
     private var skipPagesSection: some View {
         VStack(spacing: 12) {
-            Text("Vynechání stránek")
+            Text("Vynechání stránek".localized)
                 .font(.headline)
                 .foregroundColor(.primary)
             
             HStack {
-                Text("Vynechat:")
+                Text("Zadejte čísla stránek oddělená čárkou".localized + ":")
                     .frame(width: 90, alignment: .leading)
                     .font(.caption)
                     .foregroundColor(.secondary)
@@ -140,16 +147,16 @@ struct ContentView: View {
     
     private var rotationSection: some View {
         VStack(spacing: 12) {
-            Text("Otočení")
+            Text("Otočení".localized)
                 .font(.headline)
                 .foregroundColor(.primary)
             
             VStack(spacing: 8) {
-                Toggle("Landscape → Portrait", isOn: $rotateToPortrait)
+                Toggle("Otočit z landscape na portrait".localized, isOn: $rotateToPortrait)
                     .toggleStyle(SwitchToggleStyle(tint: .green))
                     .font(.caption)
                 
-                Toggle("Po směru hodinových ručiček", isOn: $rotateClockwise)
+                Toggle("Po směru hodinových ručiček".localized, isOn: $rotateClockwise)
                     .toggleStyle(SwitchToggleStyle(tint: .green))
                     .font(.caption)
             }
@@ -162,11 +169,11 @@ struct ContentView: View {
     
     private var cuttingSection: some View {
         VStack(spacing: 12) {
-            Text("Řezání")
+            Text("Řezání".localized)
                 .font(.headline)
                 .foregroundColor(.primary)
             
-            Toggle("Vypnout řezání", isOn: $disableCutting)
+            Toggle("Vypnout řezání".localized, isOn: $disableCutting)
                 .toggleStyle(SwitchToggleStyle(tint: .orange))
                 .font(.caption)
         }
@@ -177,7 +184,7 @@ struct ContentView: View {
     }
     
     private var openPDFButton: some View {
-        Button("Otevřít PDF") {
+        Button("Otevřít PDF".localized) {
             isImporterPresented = true
         }
         .buttonStyle(.borderedProminent)
@@ -186,18 +193,18 @@ struct ContentView: View {
     
     private func savePDFSection(doc: PDFDocument) -> some View {
         VStack(spacing: 8) {
-            Text("Počet stránek: \(pageCount)")
+            Text("Počet stránek".localized + ": \(pageCount)")
                 .font(.caption)
                 .foregroundColor(.secondary)
             
             HStack(spacing: 8) {
-                Button("Uložit PDF") {
+                Button("Uložit PDF".localized) {
                     savePDF(doc)
                 }
                 .buttonStyle(.bordered)
                 .controlSize(.regular)
                 
-                Button("Náhled v Preview") {
+                Button("Náhled v Preview".localized) {
                     previewInPreview(doc)
                 }
                 .buttonStyle(.bordered)
@@ -534,7 +541,7 @@ struct PDFThumbnailsView: View {
             let availableHeight = geometry.size.height
             
             VStack(spacing: 8) {
-                Text("Náhled všech stránek (\(document.pageCount))")
+                Text("Náhled všech stránek".localized + " (\(document.pageCount))")
                     .font(.caption)
                     .foregroundColor(.secondary)
                     .onAppear {
@@ -572,7 +579,7 @@ struct PDFThumbnailsView: View {
                                         .overlay(
                                             // Text "VYNECHÁNO" pro vynechané stránky
                                             isSkipped ?
-                                            Text("VYNECHÁNO")
+                                            Text("VYNECHÁNO".localized)
                                                 .font(.caption)
                                                 .fontWeight(.bold)
                                                 .foregroundColor(.white)
@@ -596,7 +603,7 @@ struct PDFThumbnailsView: View {
                                         )
                                 }
                                 
-                                Text("Str. \(pageNumber)")
+                                Text("Str.".localized + " \(pageNumber)")
                                     .font(.caption2)
                                     .foregroundColor(isSkipped ? .red : .secondary)
                                     .fontWeight(isSkipped ? .bold : .regular)
