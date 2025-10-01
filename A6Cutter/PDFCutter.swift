@@ -57,11 +57,15 @@ enum PDFCutter {
             print("🔲 A6 \(orientation) rozměry: \(a6WidthPts) x \(a6HeightPts) bodů")
             print("📊 Rozdělení: \(cols) x \(rows) dlaždic, velikost dlaždice: \(tileWidth) x \(tileHeight)")
             
+            // Light upward shift for horizontal cut line
+            let lightShift = -40.0 // 20 points upward shift
+            print("📏 Lehký posun nahoru: \(lightShift) bodů")
+            
             for row in 0..<rows {
                 for col in 0..<cols {
                     let cropRect = CGRect(
                         x: pageRect.minX + CGFloat(col) * a6WidthPts,
-                        y: pageRect.minY + CGFloat(row) * a6HeightPts,
+                        y: pageRect.minY + CGFloat(row) * a6HeightPts - lightShift,
                         width: a6WidthPts,
                         height: a6HeightPts
                     )
