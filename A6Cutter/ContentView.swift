@@ -202,7 +202,7 @@ struct ContentView: View {
         VStack(spacing: 16) {
                     if let doc = cutDocument {
                 PDFThumbnailsView(document: doc, skipPages: skipPagesEnabled ? parseSkipPages() : [])
-                    .id("pdf-thumbnails-\(doc.pageCount)-\(horizontalShift)-\(verticalShift)-\(skipPagesEnabled)")
+                    .id("pdf-thumbnails-\(doc.pageCount)-\(horizontalShift)-\(verticalShift)-\(skipPagesEnabled)-\(rotationEnabled)-\(cuttingEnabled)-\(rotateClockwise)")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color.gray.opacity(0.05))
                     .cornerRadius(12)
@@ -329,7 +329,8 @@ struct ContentView: View {
             saveSettings()
             regeneratePDF()
         }
-        .onChange(of: rotationEnabled) { _ in
+        .onChange(of: rotationEnabled) { newValue in
+            print("🔄 rotationEnabled změněno na: \(newValue)")
             saveSettings()
             regeneratePDF()
         }
@@ -363,7 +364,15 @@ struct ContentView: View {
                         self.originalDocument = originalDocument
                         
                         // Pro preview nepoužíváme vynechání stránek - zobrazíme všechny stránky
-                        if let processed = PDFCutter.cutToA6(document: originalDocument, horizontalShift: horizontalShift, verticalShift: verticalShift, skipPages: [], rotateToPortrait: rotateToPortrait, disableCutting: disableCutting, rotateClockwise: rotateClockwise) {
+                        // Použijeme efektivní hodnoty podle stavu sekcí
+                        let effectiveRotateToPortrait = rotationEnabled ? true : false
+                        let effectiveDisableCutting = cuttingEnabled ? disableCutting : true
+                        let effectiveRotateClockwise = rotationEnabled ? rotateClockwise : true
+                        
+                        print("🔧 Při načtení PDF - Enable stavy: rotationEnabled=\(rotationEnabled), cuttingEnabled=\(cuttingEnabled), skipPagesEnabled=\(skipPagesEnabled)")
+                        print("🎯 Při načtení PDF - Efektivní hodnoty: rotateToPortrait=\(effectiveRotateToPortrait), disableCutting=\(effectiveDisableCutting), rotateClockwise=\(effectiveRotateClockwise)")
+                        
+                        if let processed = PDFCutter.cutToA6(document: originalDocument, horizontalShift: horizontalShift, verticalShift: verticalShift, skipPages: [], rotateToPortrait: effectiveRotateToPortrait, disableCutting: effectiveDisableCutting, rotateClockwise: effectiveRotateClockwise) {
                             print("✅ PDF úspěšně rozřezán na A6, nový počet stránek: \(processed.pageCount)")
                             cutDocument = processed
                             pageCount = processed.pageCount
@@ -505,12 +514,15 @@ struct ContentView: View {
         
         print("🔄 Regeneruji PDF s novými nastaveními (bez vynechání stránek pro preview)...")
         print("📊 Aktuální nastavení: hShift=\(horizontalShift), vShift=\(verticalShift), skip=\(skipPages), rotate=\(rotateToPortrait), disable=\(disableCutting), clockwise=\(rotateClockwise)")
+        print("🔧 Enable stavy: rotationEnabled=\(rotationEnabled), cuttingEnabled=\(cuttingEnabled), skipPagesEnabled=\(skipPagesEnabled)")
         
         // Pro preview nepoužíváme vynechání stránek - zobrazíme všechny stránky
         // Použijeme enable/disable stavy místo původních toggleů
-        let effectiveRotateToPortrait = rotationEnabled ? rotateToPortrait : false
+        let effectiveRotateToPortrait = rotationEnabled ? true : false  // Pokud je rotation enabled, vždy otáčej landscape na portrait
         let effectiveDisableCutting = cuttingEnabled ? disableCutting : true  // Pokud je cutting disabled, pak je řezání vypnuto
         let effectiveRotateClockwise = rotationEnabled ? rotateClockwise : true
+        
+        print("🎯 Efektivní hodnoty: rotateToPortrait=\(effectiveRotateToPortrait), disableCutting=\(effectiveDisableCutting), rotateClockwise=\(effectiveRotateClockwise)")
         
         if let processed = PDFCutter.cutToA6(document: original, horizontalShift: horizontalShift, verticalShift: verticalShift, skipPages: [], rotateToPortrait: effectiveRotateToPortrait, disableCutting: effectiveDisableCutting, rotateClockwise: effectiveRotateClockwise) {
             print("✅ PDF úspěšně regenerován s novými nastaveními (bez vynechání), nový počet stránek: \(processed.pageCount)")
