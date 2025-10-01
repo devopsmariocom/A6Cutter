@@ -1,0 +1,568 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXContainerItemProxy section */
+		AC10E5AF2E8D40D9007AEED6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AC10E5972E8D40D8007AEED6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AC10E59E2E8D40D8007AEED6;
+			remoteInfo = A6Cutter;
+		};
+		AC10E5B92E8D40D9007AEED6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = AC10E5972E8D40D8007AEED6 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AC10E59E2E8D40D8007AEED6;
+			remoteInfo = A6Cutter;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		AC10E59F2E8D40D8007AEED6 /* A6Cutter.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = A6Cutter.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AC10E5AE2E8D40D9007AEED6 /* A6CutterTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = A6CutterTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AC10E5B82E8D40D9007AEED6 /* A6CutterUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = A6CutterUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		AC10E5A12E8D40D8007AEED6 /* A6Cutter */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = A6Cutter;
+			sourceTree = "<group>";
+		};
+		AC10E5B12E8D40D9007AEED6 /* A6CutterTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = A6CutterTests;
+			sourceTree = "<group>";
+		};
+		AC10E5BB2E8D40D9007AEED6 /* A6CutterUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = A6CutterUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		AC10E59C2E8D40D8007AEED6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AC10E5AB2E8D40D9007AEED6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AC10E5B52E8D40D9007AEED6 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		AC10E5962E8D40D8007AEED6 = {
+			isa = PBXGroup;
+			children = (
+				AC10E5A12E8D40D8007AEED6 /* A6Cutter */,
+				AC10E5B12E8D40D9007AEED6 /* A6CutterTests */,
+				AC10E5BB2E8D40D9007AEED6 /* A6CutterUITests */,
+				AC10E5A02E8D40D8007AEED6 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		AC10E5A02E8D40D8007AEED6 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				AC10E59F2E8D40D8007AEED6 /* A6Cutter.app */,
+				AC10E5AE2E8D40D9007AEED6 /* A6CutterTests.xctest */,
+				AC10E5B82E8D40D9007AEED6 /* A6CutterUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		AC10E59E2E8D40D8007AEED6 /* A6Cutter */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AC10E5C22E8D40D9007AEED6 /* Build configuration list for PBXNativeTarget "A6Cutter" */;
+			buildPhases = (
+				AC10E59B2E8D40D8007AEED6 /* Sources */,
+				AC10E59C2E8D40D8007AEED6 /* Frameworks */,
+				AC10E59D2E8D40D8007AEED6 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				AC10E5A12E8D40D8007AEED6 /* A6Cutter */,
+			);
+			name = A6Cutter;
+			packageProductDependencies = (
+			);
+			productName = A6Cutter;
+			productReference = AC10E59F2E8D40D8007AEED6 /* A6Cutter.app */;
+			productType = "com.apple.product-type.application";
+		};
+		AC10E5AD2E8D40D9007AEED6 /* A6CutterTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AC10E5C52E8D40D9007AEED6 /* Build configuration list for PBXNativeTarget "A6CutterTests" */;
+			buildPhases = (
+				AC10E5AA2E8D40D9007AEED6 /* Sources */,
+				AC10E5AB2E8D40D9007AEED6 /* Frameworks */,
+				AC10E5AC2E8D40D9007AEED6 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AC10E5B02E8D40D9007AEED6 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				AC10E5B12E8D40D9007AEED6 /* A6CutterTests */,
+			);
+			name = A6CutterTests;
+			packageProductDependencies = (
+			);
+			productName = A6CutterTests;
+			productReference = AC10E5AE2E8D40D9007AEED6 /* A6CutterTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		AC10E5B72E8D40D9007AEED6 /* A6CutterUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AC10E5C82E8D40D9007AEED6 /* Build configuration list for PBXNativeTarget "A6CutterUITests" */;
+			buildPhases = (
+				AC10E5B42E8D40D9007AEED6 /* Sources */,
+				AC10E5B52E8D40D9007AEED6 /* Frameworks */,
+				AC10E5B62E8D40D9007AEED6 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AC10E5BA2E8D40D9007AEED6 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				AC10E5BB2E8D40D9007AEED6 /* A6CutterUITests */,
+			);
+			name = A6CutterUITests;
+			packageProductDependencies = (
+			);
+			productName = A6CutterUITests;
+			productReference = AC10E5B82E8D40D9007AEED6 /* A6CutterUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		AC10E5972E8D40D8007AEED6 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					AC10E59E2E8D40D8007AEED6 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
+					AC10E5AD2E8D40D9007AEED6 = {
+						CreatedOnToolsVersion = 26.0.1;
+						TestTargetID = AC10E59E2E8D40D8007AEED6;
+					};
+					AC10E5B72E8D40D9007AEED6 = {
+						CreatedOnToolsVersion = 26.0.1;
+						TestTargetID = AC10E59E2E8D40D8007AEED6;
+					};
+				};
+			};
+			buildConfigurationList = AC10E59A2E8D40D8007AEED6 /* Build configuration list for PBXProject "A6Cutter" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = AC10E5962E8D40D8007AEED6;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = AC10E5A02E8D40D8007AEED6 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				AC10E59E2E8D40D8007AEED6 /* A6Cutter */,
+				AC10E5AD2E8D40D9007AEED6 /* A6CutterTests */,
+				AC10E5B72E8D40D9007AEED6 /* A6CutterUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		AC10E59D2E8D40D8007AEED6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AC10E5AC2E8D40D9007AEED6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AC10E5B62E8D40D9007AEED6 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		AC10E59B2E8D40D8007AEED6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AC10E5AA2E8D40D9007AEED6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AC10E5B42E8D40D9007AEED6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		AC10E5B02E8D40D9007AEED6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AC10E59E2E8D40D8007AEED6 /* A6Cutter */;
+			targetProxy = AC10E5AF2E8D40D9007AEED6 /* PBXContainerItemProxy */;
+		};
+		AC10E5BA2E8D40D9007AEED6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AC10E59E2E8D40D8007AEED6 /* A6Cutter */;
+			targetProxy = AC10E5B92E8D40D9007AEED6 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		AC10E5C02E8D40D9007AEED6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		AC10E5C12E8D40D9007AEED6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		AC10E5C32E8D40D9007AEED6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Vejlupek-s.r.o..A6Cutter";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		AC10E5C42E8D40D9007AEED6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				ENABLE_APP_SANDBOX = YES;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SELECTED_FILES = readonly;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Vejlupek-s.r.o..A6Cutter";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+		AC10E5C62E8D40D9007AEED6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Vejlupek-s.r.o..A6CutterTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/A6Cutter.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/A6Cutter";
+			};
+			name = Debug;
+		};
+		AC10E5C72E8D40D9007AEED6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 26.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Vejlupek-s.r.o..A6CutterTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/A6Cutter.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/A6Cutter";
+			};
+			name = Release;
+		};
+		AC10E5C92E8D40D9007AEED6 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Vejlupek-s.r.o..A6CutterUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = A6Cutter;
+			};
+			name = Debug;
+		};
+		AC10E5CA2E8D40D9007AEED6 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "Vejlupek-s.r.o..A6CutterUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TEST_TARGET_NAME = A6Cutter;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		AC10E59A2E8D40D8007AEED6 /* Build configuration list for PBXProject "A6Cutter" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AC10E5C02E8D40D9007AEED6 /* Debug */,
+				AC10E5C12E8D40D9007AEED6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AC10E5C22E8D40D9007AEED6 /* Build configuration list for PBXNativeTarget "A6Cutter" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AC10E5C32E8D40D9007AEED6 /* Debug */,
+				AC10E5C42E8D40D9007AEED6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AC10E5C52E8D40D9007AEED6 /* Build configuration list for PBXNativeTarget "A6CutterTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AC10E5C62E8D40D9007AEED6 /* Debug */,
+				AC10E5C72E8D40D9007AEED6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AC10E5C82E8D40D9007AEED6 /* Build configuration list for PBXNativeTarget "A6CutterUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AC10E5C92E8D40D9007AEED6 /* Debug */,
+				AC10E5CA2E8D40D9007AEED6 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = AC10E5972E8D40D8007AEED6 /* Project object */;
+}
