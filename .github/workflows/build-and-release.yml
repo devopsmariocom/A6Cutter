@@ -61,52 +61,15 @@ jobs:
         
     - name: Update Info.plist with version and hash
       run: |
-        # Find the Info.plist file
-        INFO_PLIST=$(find . -name "Info.plist" -path "*/A6Cutter.app/Contents/Info.plist" | head -1)
+        # Update the source Info.plist before building
+        INFO_PLIST="A6Cutter/Info.plist"
         
-        if [ -z "$INFO_PLIST" ]; then
-          # If not found, create a temporary one for build
-          INFO_PLIST="A6Cutter/Info.plist"
-          mkdir -p A6Cutter
-          cat > "$INFO_PLIST" << EOF
-        <?xml version="1.0" encoding="UTF-8"?>
-        <!DOCTYPE plist PUBLIC "-//Apple//DTD PList 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-        <plist version="1.0">
-        <dict>
-            <key>CFBundleShortVersionString</key>
-            <string>${{ steps.version_info.outputs.VERSION }}</string>
-            <key>CFBundleVersion</key>
-            <string>${{ github.run_number }}</string>
-            <key>GitHash</key>
-            <string>${{ steps.version_info.outputs.GIT_HASH }}</string>
-        </dict>
-        </plist>
-        EOF
-        fi
+        # Update version and build number
+        plutil -replace CFBundleShortVersionString -string "${{ steps.version_info.outputs.VERSION }}" "$INFO_PLIST"
+        plutil -replace CFBundleVersion -string "${{ github.run_number }}" "$INFO_PLIST"
         
-        # Update existing Info.plist or create new one
-        if [ -f "$INFO_PLIST" ]; then
-          # Use plutil to update the plist
-          plutil -replace CFBundleShortVersionString -string "${{ steps.version_info.outputs.VERSION }}" "$INFO_PLIST"
-          plutil -replace CFBundleVersion -string "${{ github.run_number }}" "$INFO_PLIST"
-          plutil -replace GitHash -string "${{ steps.version_info.outputs.GIT_HASH }}" "$INFO_PLIST"
-        else
-          # Create new Info.plist
-          cat > "$INFO_PLIST" << EOF
-        <?xml version="1.0" encoding="UTF-8"?>
-        <!DOCTYPE plist PUBLIC "-//Apple//DTD Plist 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-        <plist version="1.0">
-        <dict>
-            <key>CFBundleShortVersionString</key>
-            <string>${{ steps.version_info.outputs.VERSION }}</string>
-            <key>CFBundleVersion</key>
-            <string>${{ github.run_number }}</string>
-            <key>GitHash</key>
-            <string>${{ steps.version_info.outputs.GIT_HASH }}</string>
-        </dict>
-        </plist>
-        EOF
-        fi
+        # Add git hash to Info.plist
+        plutil -replace GitHash -string "${{ steps.version_info.outputs.GIT_HASH }}" "$INFO_PLIST"
         
         echo "Updated Info.plist with version ${{ steps.version_info.outputs.VERSION }} and hash ${{ steps.version_info.outputs.GIT_HASH_SHORT }}"
         
