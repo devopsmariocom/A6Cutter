@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct AboutView: View {
+    @Environment(\.dismissWindow) private var dismissWindow
+    
     var body: some View {
         VStack(spacing: 20) {
             // App icon placeholder
@@ -55,10 +57,8 @@ struct AboutView: View {
             .frame(maxHeight: 300)
             
             Button("Close") {
-                // Close only the About window, not the entire app
-                if let aboutWindow = NSApplication.shared.windows.first(where: { $0.identifier?.rawValue == "about" }) {
-                    aboutWindow.close()
-                }
+                // Close only the About window using SwiftUI environment
+                dismissWindow(id: "about")
             }
             .buttonStyle(.borderedProminent)
             .padding(.top, 10)
