@@ -169,13 +169,16 @@ jobs:
           exit 1
         fi
         
-        # Check if there are any executable files in bin
-        if [ -z "$(find "$SPARKLE_BIN_DIR" -type f -executable)" ]; then
+        # Check if there are any executable files in bin (macOS compatible)
+        EXECUTABLE_FILES=$(find "$SPARKLE_BIN_DIR" -type f -perm +111 2>/dev/null || find "$SPARKLE_BIN_DIR" -type f -perm +x 2>/dev/null || ls -la "$SPARKLE_BIN_DIR" | grep -E '^-rwx' | wc -l)
+        if [ "$EXECUTABLE_FILES" -eq 0 ]; then
           echo "❌ No executable files found in $SPARKLE_BIN_DIR"
           echo "📁 Contents:"
           ls -la "$SPARKLE_BIN_DIR"
           exit 1
         fi
+        
+        echo "✅ Found $EXECUTABLE_FILES executable files in $SPARKLE_BIN_DIR"
         
         chmod +x "$SPARKLE_BIN_DIR"/*
         mkdir -p bin
