@@ -110,6 +110,30 @@ jobs:
         
         echo "Updated Info.plist with version ${{ steps.version_info.outputs.VERSION }} and hash ${{ steps.version_info.outputs.GIT_HASH_SHORT }}"
         
+    - name: Download Sparkle tools
+      run: |
+        echo "📦 Downloading Sparkle tools..."
+        curl -L -o sparkle.tar.xz https://github.com/sparkle-project/Sparkle/releases/latest/download/Sparkle-2.6.0.tar.xz
+        tar -xf sparkle.tar.xz
+        chmod +x Sparkle-2.6.0/bin/*
+        mkdir -p bin
+        cp Sparkle-2.6.0/bin/* ./bin/
+        
+    - name: Generate Sparkle keys (if not exist)
+      run: |
+        if [ ! -f "keys/ed25519_private_key.pem" ]; then
+          echo "🔑 Generating Sparkle keys..."
+          mkdir -p keys
+          ./bin/ed25519_sign_util generate keys/ed25519_private_key.pem
+          ./bin/ed25519_sign_util public-key keys/ed25519_private_key.pem > keys/ed25519_public_key.pem
+          PUBLIC_KEY=$(grep -v "BEGIN\|END" keys/ed25519_public_key.pem | tr -d '\n')
+          echo "Public key: $PUBLIC_KEY"
+          # Update Info.plist with public key
+          plutil -replace SUPublicEDSAKey -string "$PUBLIC_KEY" A6Cutter/Info.plist
+        else
+          echo "🔑 Sparkle keys already exist"
+        fi
+        
     - name: Build A6Cutter
       run: |
         xcodebuild -scheme A6Cutter -configuration Release -destination "platform=macOS" clean build
@@ -124,6 +148,28 @@ jobs:
         
         # Create DMG
         hdiutil create -volname "A6Cutter" -srcfolder dmg -ov -format UDZO A6Cutter.dmg
+        
+    - name: Generate appcast.xml
+      run: |
+        echo "📡 Generating appcast.xml..."
+        mkdir -p releases
+        cp A6Cutter.dmg releases/A6Cutter-${{ steps.version_info.outputs.VERSION }}.dmg
+        
+        # Generate appcast.xml
+        ./bin/generate_appcast \
+          --ed-key-file keys/ed25519_private_key.pem \
+          --download-url-prefix "https://github.com/mariovejlupek/A6Cutter/releases/download/" \
+          --full-release-notes-url "https://github.com/mariovejlupek/A6Cutter/releases" \
+          releases/
+        
+        # Move appcast.xml to root
+        if [ -f "releases/appcast.xml" ]; then
+          mv releases/appcast.xml .
+          echo "✅ appcast.xml generated successfully!"
+        else
+          echo "❌ Failed to generate appcast.xml"
+          exit 1
+        fi
         
     - name: Get version from tag
       id: get_version
@@ -177,7 +223,9 @@ jobs:
       if: startsWith(github.ref, 'refs/tags/') || github.event_name == 'workflow_dispatch'
       uses: softprops/action-gh-release@v2
       with:
-        files: A6Cutter.dmg
+        files: |
+          A6Cutter.dmg
+          appcast.xml
         name: A6Cutter ${{ steps.get_version.outputs.VERSION }}
         body: ${{ steps.release_notes.outputs.RELEASE_NOTES }}
         draft: false

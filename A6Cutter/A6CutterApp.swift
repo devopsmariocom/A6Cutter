@@ -7,10 +7,18 @@
 
 import SwiftUI
 import SwiftData
+// import Sparkle // TODO: Add Sparkle package dependency
 
 @main
 struct A6CutterApp: App {
     @Environment(\.openWindow) private var openWindow
+    
+    // Sparkle updater controller - TODO: Uncomment after adding Sparkle package
+    // private let updaterController = SPUStandardUpdaterController(
+    //     startingUpdater: true,
+    //     updaterDelegate: nil,
+    //     userDriverDelegate: nil
+    // )
     
     private func openAboutWindow() {
         // Open the About window using SwiftUI openWindow
@@ -41,6 +49,9 @@ struct A6CutterApp: App {
                     openAboutWindow()
                 }
             }
+            // CommandGroup(after: .appInfo) {
+            //     CheckForUpdatesCommand(updater: updaterController.updater)
+            // }
         }
         
         WindowGroup("About A6Cutter", id: "about") {

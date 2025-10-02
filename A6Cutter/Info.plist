@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>CFBundleIdentifier</key>
+    <string>Vejlupek-s.r.o..A6Cutter</string>
+    <key>CFBundleName</key>
+    <string>A6Cutter</string>
+    <key>CFBundleDisplayName</key>
+    <string>A6Cutter</string>
+    <key>CFBundleExecutable</key>
+    <string>A6Cutter</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleSignature</key>
+    <string>????</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>Copyright © 2025 Mario Vejlupek. All rights reserved.</string>
+    
+    <!-- Sparkle Configuration -->
+    <key>SUFeedURL</key>
+    <string>https://github.com/mariovejlupek/A6Cutter/releases.atom</string>
+    <key>SUPublicEDSAKey</key>
+    <string>placeholder-key-will-be-generated</string>
+    <key>SUEnableAutomaticChecks</key>
+    <true/>
+    <key>SUCheckInterval</key>
+    <integer>86400</integer>
+    <key>SUAutomaticallyUpdate</key>
+    <false/>
+    <key>SUEnableSystemProfiling</key>
+    <true/>
+    <key>SUEnableAutomaticDowngrades</key>
+    <false/>
+    <key>SUScheduledCheckInterval</key>
+    <integer>86400</integer>
+    <key>SUUpdateCheckInterval</key>
+    <integer>86400</integer>
+    <key>SUEnableRelaunchTool</key>
+    <true/>
+    <key>SUEnableInstallerLauncherService</key>
+    <true/>
+</dict>
+</plist>

@@ -2,3 +2,10 @@ default.profraw
 .DS_Store
 tmp
 .env*
+
+# Sparkle auto-updater
+keys/
+bin/
+releases/
+appcast.xml
+*.dmg
