@@ -147,33 +147,24 @@ struct A6CutterApp: App {
             return
         }
         
-        // Show progress dialog
-        let progressAlert = NSAlert()
-        progressAlert.messageText = "Downloading Update"
-        progressAlert.informativeText = "Please wait while the update is downloaded and installed..."
-        progressAlert.alertStyle = .informational
-        progressAlert.addButton(withTitle: "Cancel")
+        // Show progress dialog with progress bar and log
+        showProgressDialog()
         
-        // Show progress dialog
-        DispatchQueue.main.async {
-            let response = progressAlert.runModal()
-            if response == .alertFirstButtonReturn {
-                // User cancelled
-                return
-            }
-        }
+        updateProgress("Starting download from: \(dmgUrl)", isError: false)
         
         let task = URLSession.shared.downloadTask(with: url) { localURL, response, error in
             DispatchQueue.main.async {
                 if let error = error {
-                    self.showDownloadError("Download failed: \(error.localizedDescription)")
+                    self.updateProgress("Download failed: \(error.localizedDescription)", isError: true)
                     return
                 }
                 
                 guard let localURL = localURL else {
-                    self.showDownloadError("No local file received")
+                    self.updateProgress("No local file received", isError: true)
                     return
                 }
+                
+                self.updateProgress("Download completed, starting installation...", isError: false)
                 
                 // Install the update
                 self.installUpdate(from: localURL)
@@ -183,8 +174,124 @@ struct A6CutterApp: App {
         task.resume()
     }
     
+    private var progressWindow: NSWindow?
+    private var progressBar: NSProgressIndicator?
+    private var logTextView: NSTextView?
+    private var isExpanded = false
+    
+    private func showProgressDialog() {
+        // Create progress window
+        progressWindow = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 500, height: 200),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        
+        guard let window = progressWindow else { return }
+        
+        window.title = "Updating A6Cutter"
+        window.center()
+        window.makeKeyAndOrderFront(nil)
+        
+        // Create main view
+        let mainView = NSView(frame: NSRect(x: 0, y: 0, width: 500, height: 200))
+        
+        // Progress label
+        let progressLabel = NSTextField(labelWithString: "Downloading update...")
+        progressLabel.frame = NSRect(x: 20, y: 160, width: 460, height: 20)
+        progressLabel.font = NSFont.systemFont(ofSize: 14, weight: .medium)
+        mainView.addSubview(progressLabel)
+        
+        // Progress bar
+        progressBar = NSProgressIndicator(frame: NSRect(x: 20, y: 130, width: 460, height: 20))
+        progressBar?.style = .bar
+        progressBar?.isIndeterminate = true
+        progressBar?.startAnimation(nil)
+        mainView.addSubview(progressBar!)
+        
+        // Log text view (initially hidden)
+        logTextView = NSTextView(frame: NSRect(x: 20, y: 20, width: 460, height: 80))
+        logTextView?.isEditable = false
+        logTextView?.font = NSFont.monospacedSystemFont(ofSize: 11, weight: .regular)
+        logTextView?.backgroundColor = NSColor.controlBackgroundColor
+        logTextView?.isHidden = true
+        mainView.addSubview(logTextView!)
+        
+        // Expand/Collapse button
+        let expandButton = NSButton(title: "Show Log", target: self, action: #selector(toggleLog))
+        expandButton.frame = NSRect(x: 20, y: 10, width: 80, height: 25)
+        mainView.addSubview(expandButton)
+        
+        // Cancel button
+        let cancelButton = NSButton(title: "Cancel", target: self, action: #selector(cancelUpdate))
+        cancelButton.frame = NSRect(x: 400, y: 10, width: 80, height: 25)
+        mainView.addSubview(cancelButton)
+        
+        window.contentView = mainView
+        
+        // Initial log message
+        updateProgress("Starting update process...", isError: false)
+    }
+    
+    @objc private func toggleLog() {
+        guard let logView = logTextView else { return }
+        
+        isExpanded.toggle()
+        
+        if isExpanded {
+            logView.isHidden = false
+            progressWindow?.setContentSize(NSSize(width: 500, height: 300))
+        } else {
+            logView.isHidden = true
+            progressWindow?.setContentSize(NSSize(width: 500, height: 200))
+        }
+    }
+    
+    @objc private func cancelUpdate() {
+        progressWindow?.close()
+        progressWindow = nil
+    }
+    
+    private func updateProgress(_ message: String, isError: Bool = false) {
+        DispatchQueue.main.async {
+            let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .none, timeStyle: .medium)
+            let logMessage = "[\(timestamp)] \(message)\n"
+            
+            if let logView = self.logTextView {
+                let attributedString = NSMutableAttributedString(string: logMessage)
+                if isError {
+                    attributedString.addAttribute(.foregroundColor, value: NSColor.systemRed, range: NSRange(location: 0, length: logMessage.count))
+                } else {
+                    attributedString.addAttribute(.foregroundColor, value: NSColor.labelColor, range: NSRange(location: 0, length: logMessage.count))
+                }
+                
+                logView.textStorage?.append(attributedString)
+                logView.scrollToEndOfDocument(nil)
+            }
+        }
+    }
+    
+    private func updateProgressBar(step: Int, total: Int) {
+        DispatchQueue.main.async {
+            self.progressBar?.isIndeterminate = false
+            self.progressBar?.doubleValue = Double(step) / Double(total) * 100.0
+        }
+    }
+    
+    private func closeProgressDialog() {
+        DispatchQueue.main.async {
+            self.progressWindow?.close()
+            self.progressWindow = nil
+        }
+    }
+    
     private func installUpdate(from dmgURL: URL) {
+        updateProgress("Download completed successfully", isError: false)
+        updateProgressBar(step: 1, total: 6)
+        
         // Mount the DMG
+        updateProgress("Mounting DMG file...", isError: false)
         let mountTask = Process()
         mountTask.launchPath = "/usr/bin/hdiutil"
         mountTask.arguments = ["attach", dmgURL.path, "-nobrowse", "-noverify", "-noautoopen", "-readonly"]
@@ -199,9 +306,12 @@ struct A6CutterApp: App {
         if mountTask.terminationStatus != 0 {
             let errorData = pipe.fileHandleForReading.readDataToEndOfFile()
             let errorOutput = String(data: errorData, encoding: .utf8) ?? "Unknown error"
-            showDownloadError("Failed to mount DMG: \(errorOutput)")
+            updateProgress("Failed to mount DMG: \(errorOutput)", isError: true)
             return
         }
+        
+        updateProgress("DMG mounted successfully", isError: false)
+        updateProgressBar(step: 2, total: 6)
         
         // Get the mount point from output
         let data = pipe.fileHandleForReading.readDataToEndOfFile()
@@ -224,9 +334,12 @@ struct A6CutterApp: App {
         }
         
         if mountPoint.isEmpty {
-            showDownloadError("Could not find mount point in: \(output)")
+            updateProgress("Could not find mount point in: \(output)", isError: true)
             return
         }
+        
+        updateProgress("Found mount point: \(mountPoint)", isError: false)
+        updateProgressBar(step: 3, total: 6)
         
         // Copy the app to Applications
         let sourceApp = "\(mountPoint)/A6Cutter.app"
@@ -234,18 +347,26 @@ struct A6CutterApp: App {
         
         // Check if source app exists
         if !FileManager.default.fileExists(atPath: sourceApp) {
-            showDownloadError("A6Cutter.app not found in DMG at: \(sourceApp)")
+            updateProgress("A6Cutter.app not found in DMG at: \(sourceApp)", isError: true)
             return
         }
         
+        updateProgress("Found A6Cutter.app in DMG", isError: false)
+        updateProgressBar(step: 4, total: 6)
+        
         // Remove existing app
+        updateProgress("Removing existing application...", isError: false)
         let removeTask = Process()
         removeTask.launchPath = "/bin/rm"
         removeTask.arguments = ["-rf", destinationApp]
         removeTask.launch()
         removeTask.waitUntilExit()
         
+        updateProgress("Existing application removed", isError: false)
+        updateProgressBar(step: 5, total: 6)
+        
         // Copy new app
+        updateProgress("Installing new application...", isError: false)
         let copyTask = Process()
         copyTask.launchPath = "/bin/cp"
         copyTask.arguments = ["-R", sourceApp, "/Applications/"]
@@ -253,25 +374,37 @@ struct A6CutterApp: App {
         copyTask.waitUntilExit()
         
         if copyTask.terminationStatus != 0 {
-            showDownloadError("Failed to copy app to Applications folder")
+            updateProgress("Failed to copy app to Applications folder", isError: true)
             return
         }
         
+        updateProgress("Application installed successfully", isError: false)
+        
         // Unmount the DMG
+        updateProgress("Cleaning up DMG...", isError: false)
         let unmountTask = Process()
         unmountTask.launchPath = "/usr/bin/hdiutil"
         unmountTask.arguments = ["detach", mountPoint]
         unmountTask.launch()
         unmountTask.waitUntilExit()
         
+        updateProgress("DMG unmounted", isError: false)
+        updateProgressBar(step: 6, total: 6)
+        
         // Launch the updated app
+        updateProgress("Launching updated application...", isError: false)
         let launchTask = Process()
         launchTask.launchPath = "/usr/bin/open"
         launchTask.arguments = [destinationApp]
         launchTask.launch()
         
-        // Exit current app
-        NSApplication.shared.terminate(nil)
+        updateProgress("Update completed successfully! Launching new version...", isError: false)
+        
+        // Close progress dialog and exit current app
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+            self.closeProgressDialog()
+            NSApplication.shared.terminate(nil)
+        }
     }
     
     private func showDownloadError(_ message: String) {
