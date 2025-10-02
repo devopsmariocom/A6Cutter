@@ -200,10 +200,20 @@ jobs:
         if [ ! -f "keys/ed25519_private_key.pem" ]; then
           echo "🔑 Generating Sparkle keys..."
           mkdir -p keys
-          ./bin/ed25519_sign_util generate keys/ed25519_private_key.pem
-          ./bin/ed25519_sign_util public-key keys/ed25519_private_key.pem > keys/ed25519_public_key.pem
+          
+          # List available tools for debugging
+          echo "📁 Available Sparkle tools:"
+          ls -la ./bin/
+          
+          # Use generate_keys tool (correct tool name)
+          ./bin/generate_keys keys/ed25519_private_key.pem
+          
+          # Extract public key from private key
+          ./bin/generate_keys keys/ed25519_private_key.pem > keys/ed25519_public_key.pem
+          
           PUBLIC_KEY=$(grep -v "BEGIN\|END" keys/ed25519_public_key.pem | tr -d '\n')
           echo "Public key: $PUBLIC_KEY"
+          
           # Update Info.plist with public key
           plutil -replace SUPublicEDSAKey -string "$PUBLIC_KEY" A6Cutter/Info.plist
         else
