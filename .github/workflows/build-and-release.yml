@@ -113,16 +113,39 @@ jobs:
     - name: Download Sparkle tools
       run: |
         echo "📦 Downloading Sparkle tools..."
-        # Get the latest Sparkle release URL
-        SPARKLE_URL=$(curl -s https://api.github.com/repos/sparkle-project/Sparkle/releases/latest | grep "browser_download_url.*tar.xz" | cut -d '"' -f 4)
+        # Try to get the latest Sparkle release URL with better parsing
+        SPARKLE_URL=$(curl -s https://api.github.com/repos/sparkle-project/Sparkle/releases/latest | jq -r '.assets[] | select(.name | endswith(".tar.xz")) | .browser_download_url' | head -1)
+        
+        # Fallback to a known working version if API fails
+        if [ -z "$SPARKLE_URL" ] || [ "$SPARKLE_URL" = "null" ]; then
+          echo "Using fallback URL for Sparkle 2.6.0"
+          SPARKLE_URL="https://github.com/sparkle-project/Sparkle/releases/download/2.6.0/Sparkle-2.6.0.tar.xz"
+        fi
+        
         echo "Downloading from: $SPARKLE_URL"
         curl -L -o sparkle.tar.xz "$SPARKLE_URL"
+        
+        # Verify the download
+        if [ ! -f "sparkle.tar.xz" ] || [ ! -s "sparkle.tar.xz" ]; then
+          echo "❌ Failed to download Sparkle tools"
+          exit 1
+        fi
+        
+        echo "✅ Downloaded $(ls -lh sparkle.tar.xz | awk '{print $5}')"
         tar -xf sparkle.tar.xz
-        # Find the extracted directory (it might have a different version number)
+        
+        # Find the extracted directory
         SPARKLE_DIR=$(find . -maxdepth 1 -name "Sparkle-*" -type d | head -1)
+        if [ -z "$SPARKLE_DIR" ]; then
+          echo "❌ Failed to extract Sparkle tools"
+          exit 1
+        fi
+        
+        echo "✅ Extracted to: $SPARKLE_DIR"
         chmod +x "$SPARKLE_DIR/bin/*"
         mkdir -p bin
         cp "$SPARKLE_DIR/bin/*" ./bin/
+        echo "✅ Sparkle tools ready in ./bin/"
         
     - name: Generate Sparkle keys (if not exist)
       run: |
