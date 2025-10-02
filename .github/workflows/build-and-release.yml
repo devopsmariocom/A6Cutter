@@ -205,34 +205,30 @@ jobs:
           echo "📁 Available Sparkle tools:"
           ls -la ./bin/
           
-          # Generate new private key (output goes to stdout, redirect to file)
-          ./bin/generate_keys > keys/ed25519_private_key.pem
+          # Generate new private key and get public key (saves to keychain, outputs public key)
+          echo "🔑 Generating new private key and extracting public key..."
+          PUBLIC_KEY=$(./bin/generate_keys)
           
-          # Verify private key was created
-          if [ ! -f "keys/ed25519_private_key.pem" ] || [ ! -s "keys/ed25519_private_key.pem" ]; then
-            echo "❌ Failed to generate private key"
+          # Verify public key was generated
+          if [ -z "$PUBLIC_KEY" ]; then
+            echo "❌ Failed to generate keys"
             exit 1
           fi
           
-          echo "✅ Private key generated successfully"
-          
-          # Extract public key from private key
-          echo "🔑 Extracting public key from private key..."
-          ./bin/generate_keys -p keys/ed25519_private_key.pem > keys/ed25519_public_key.pem
-          
-          # Verify public key was created
-          if [ ! -f "keys/ed25519_public_key.pem" ] || [ ! -s "keys/ed25519_public_key.pem" ]; then
-            echo "❌ Failed to extract public key"
-            echo "📁 Contents of keys directory:"
-            ls -la keys/
-            echo "📄 Private key file size:"
-            ls -la keys/ed25519_private_key.pem
-            exit 1
-          fi
-          
-          echo "✅ Public key extracted successfully"
-          PUBLIC_KEY=$(grep -v "BEGIN\|END" keys/ed25519_public_key.pem | tr -d '\n')
+          echo "✅ Keys generated successfully"
           echo "Public key: $PUBLIC_KEY"
+          
+          # Export private key to file for later use
+          echo "🔑 Exporting private key to file..."
+          ./bin/generate_keys -x keys/ed25519_private_key.pem
+          
+          # Verify private key file was created
+          if [ ! -f "keys/ed25519_private_key.pem" ] || [ ! -s "keys/ed25519_private_key.pem" ]; then
+            echo "❌ Failed to export private key"
+            exit 1
+          fi
+          
+          echo "✅ Private key exported successfully"
           
           # Update Info.plist with public key
           plutil -replace SUPublicEDSAKey -string "$PUBLIC_KEY" A6Cutter/Info.plist
