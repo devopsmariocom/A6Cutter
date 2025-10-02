@@ -218,7 +218,7 @@ jobs:
           
           # Extract public key from private key
           echo "🔑 Extracting public key from private key..."
-          ./bin/generate_keys -x keys/ed25519_private_key.pem > keys/ed25519_public_key.pem
+          ./bin/generate_keys -p keys/ed25519_private_key.pem > keys/ed25519_public_key.pem
           
           # Verify public key was created
           if [ ! -f "keys/ed25519_public_key.pem" ] || [ ! -s "keys/ed25519_public_key.pem" ]; then
