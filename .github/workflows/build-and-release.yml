@@ -205,11 +205,11 @@ jobs:
           echo "📁 Available Sparkle tools:"
           ls -la ./bin/
           
-          # Generate new private key and save to file
-          ./bin/generate_keys -f keys/ed25519_private_key.pem
+          # Generate new private key (output goes to stdout, redirect to file)
+          ./bin/generate_keys > keys/ed25519_private_key.pem
           
           # Verify private key was created
-          if [ ! -f "keys/ed25519_private_key.pem" ]; then
+          if [ ! -f "keys/ed25519_private_key.pem" ] || [ ! -s "keys/ed25519_private_key.pem" ]; then
             echo "❌ Failed to generate private key"
             exit 1
           fi
