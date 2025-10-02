@@ -55,9 +55,9 @@ struct AboutView: View {
             .frame(maxHeight: 300)
             
             Button("Close") {
-                // Close the current window
-                if let window = NSApplication.shared.keyWindow {
-                    window.close()
+                // Close only the About window, not the entire app
+                if let aboutWindow = NSApplication.shared.windows.first(where: { $0.identifier?.rawValue == "about" }) {
+                    aboutWindow.close()
                 }
             }
             .buttonStyle(.borderedProminent)
