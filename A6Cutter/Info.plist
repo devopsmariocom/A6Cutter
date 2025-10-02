@@ -3,9 +3,11 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleShortVersionString</key>
-    <string>1.0.0</string>
+    <string>1.0.4</string>
     <key>CFBundleVersion</key>
-    <string>1</string>
+    <string>42</string>
+    <key>GitHash</key>
+    <string>a1b2c3d4e5f6789012345678901234567890abcd</string>
     <key>CFBundleIdentifier</key>
     <string>Vejlupek-s.r.o..A6Cutter</string>
     <key>CFBundleName</key>
@@ -25,7 +27,7 @@
     
     <!-- Sparkle Configuration -->
     <key>SUFeedURL</key>
-    <string>https://github.com/mariovejlupek/A6Cutter/releases.atom</string>
+    <string>https://github.com/devopsmariocom/A6Cutter/releases.atom</string>
     <key>SUPublicEDSAKey</key>
     <string>placeholder-key-will-be-generated</string>
     <key>SUEnableAutomaticChecks</key>
