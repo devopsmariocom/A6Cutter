@@ -1,0 +1,66 @@
+name: Auto Release Notes
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  auto-release-notes:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Generate Release Notes
+      id: release_notes
+      run: |
+        # Get the previous tag
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+        
+        # Generate changelog from commits
+        if [ -n "$PREVIOUS_TAG" ]; then
+          COMMITS=$(git log --pretty=format:"- %s" $PREVIOUS_TAG..HEAD)
+        else
+          COMMITS=$(git log --pretty=format:"- %s" --max-count=20)
+        fi
+        
+        # Create release notes
+        cat > release_notes.md << EOF
+        ## What's New in ${{ github.ref_name }}
+        
+        ### Changes
+        $COMMITS
+        
+        ### Installation
+        1. Download the DMG file below
+        2. Open the DMG and drag A6Cutter to Applications
+        3. Right-click and select "Open" if you get security warnings
+        
+        ### System Requirements
+        - macOS 14.0 or later
+        - Apple Silicon or Intel processor
+        
+        ### Features
+        - PDF cutting into A6-sized tiles
+        - Customizable settings with live preview
+        - Page rotation and skipping
+        - Preset management
+        - Direct printing integration
+        EOF
+        
+        # Output the release notes
+        echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
+        cat release_notes.md >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+        
+    - name: Update Release
+      uses: softprops/action-gh-release@v1
+      with:
+        body: ${{ steps.release_notes.outputs.RELEASE_NOTES }}
+        files: A6Cutter.dmg
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

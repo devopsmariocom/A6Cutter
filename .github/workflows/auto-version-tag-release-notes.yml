@@ -1,0 +1,56 @@
+name: Auto Version Tag Release Notes
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'A6Cutter/**'
+      - 'A6Cutter.xcodeproj/**'
+
+jobs:
+  auto-version-tag-release-notes:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Get next version
+      id: version
+      run: |
+        # Get the latest tag
+        LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")
+        
+        # Extract version number
+        VERSION_NUMBER=$(echo $LATEST_TAG | sed 's/v//')
+        
+        # Split version into parts
+        IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION_NUMBER"
+        
+        # Increment patch version
+        NEW_PATCH=$((PATCH + 1))
+        NEW_VERSION="v$MAJOR.$MINOR.$NEW_PATCH"
+        
+        echo "VERSION=$NEW_VERSION" >> $GITHUB_OUTPUT
+        echo "Previous version: $LATEST_TAG"
+        echo "New version: $NEW_VERSION"
+        
+    - name: Create tag
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Create and push tag
+        git tag -a "${{ steps.version.outputs.VERSION }}" -m "Auto release ${{ steps.version.outputs.VERSION }}"
+        git push origin "${{ steps.version.outputs.VERSION }}"
+        
+    - name: Trigger release
+      uses: peter-evans/repository-dispatch@v2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        event-type: release-trigger
+        client-payload: '{"version": "${{ steps.version.outputs.VERSION }}"}'
