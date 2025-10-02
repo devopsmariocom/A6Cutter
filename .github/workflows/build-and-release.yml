@@ -132,20 +132,45 @@ jobs:
         fi
         
         echo "✅ Downloaded $(ls -lh sparkle.tar.xz | awk '{print $5}')"
-        tar -xf sparkle.tar.xz
         
-        # Find the extracted directory
+        # Extract with verbose output for debugging
+        echo "🔍 Extracting Sparkle tools..."
+        tar -xvf sparkle.tar.xz
+        
+        # List contents to see what was extracted
+        echo "📁 Contents after extraction:"
+        ls -la
+        
+        # Find the extracted directory (try different patterns)
         SPARKLE_DIR=$(find . -maxdepth 1 -name "Sparkle-*" -type d | head -1)
         if [ -z "$SPARKLE_DIR" ]; then
-          echo "❌ Failed to extract Sparkle tools"
+          echo "🔍 Looking for any extracted directories..."
+          find . -maxdepth 1 -type d -name "*" | grep -v "^\.$"
+          echo "❌ Failed to find Sparkle directory after extraction"
           exit 1
         fi
         
-        echo "✅ Extracted to: $SPARKLE_DIR"
+        echo "✅ Found Sparkle directory: $SPARKLE_DIR"
+        echo "📁 Contents of $SPARKLE_DIR:"
+        ls -la "$SPARKLE_DIR"
+        
+        # Check if bin directory exists
+        if [ ! -d "$SPARKLE_DIR/bin" ]; then
+          echo "❌ No bin directory found in $SPARKLE_DIR"
+          echo "📁 Available directories:"
+          find "$SPARKLE_DIR" -type d
+          exit 1
+        fi
+        
+        echo "📁 Contents of $SPARKLE_DIR/bin:"
+        ls -la "$SPARKLE_DIR/bin"
+        
         chmod +x "$SPARKLE_DIR/bin/*"
         mkdir -p bin
         cp "$SPARKLE_DIR/bin/*" ./bin/
         echo "✅ Sparkle tools ready in ./bin/"
+        echo "📁 Final bin contents:"
+        ls -la ./bin/
         
     - name: Generate Sparkle keys (if not exist)
       run: |
