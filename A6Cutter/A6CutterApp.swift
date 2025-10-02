@@ -25,6 +25,14 @@ struct A6CutterApp: App {
         openWindow(id: "about")
     }
     
+    private func checkForUpdates() {
+        // Simple check for updates that opens GitHub releases page
+        // This is a temporary solution until Sparkle is fully integrated
+        if let url = URL(string: "https://github.com/mariovejlupek/A6Cutter/releases") {
+            NSWorkspace.shared.open(url)
+        }
+    }
+    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
@@ -49,9 +57,11 @@ struct A6CutterApp: App {
                     openAboutWindow()
                 }
             }
-            // CommandGroup(after: .appInfo) {
-            //     CheckForUpdatesCommand(updater: updaterController.updater)
-            // }
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates...") {
+                    checkForUpdates()
+                }
+            }
         }
         
         WindowGroup("About A6Cutter", id: "about") {
