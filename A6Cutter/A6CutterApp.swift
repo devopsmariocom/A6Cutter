@@ -128,127 +128,16 @@ struct A6CutterApp: App {
         alert.messageText = "Update Available"
         alert.informativeText = "A6Cutter \(latestVersion) is available. You currently have version \(currentVersion).\n\n\(releaseNotes)"
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "Download & Install")
+        alert.addButton(withTitle: "Download Update")
         alert.addButton(withTitle: "Later")
         
         let response = alert.runModal()
         if response == .alertFirstButtonReturn {
-            // Download and install the update directly
-            downloadAndInstallUpdate(latestVersion: latestVersion)
-        }
-    }
-    
-    private func downloadAndInstallUpdate(latestVersion: String) {
-        // Show progress dialog
-        let progressAlert = NSAlert()
-        progressAlert.messageText = "Downloading Update"
-        progressAlert.informativeText = "Please wait while the update is downloaded and installed..."
-        progressAlert.alertStyle = .informational
-        progressAlert.addButton(withTitle: "Cancel")
-        progressAlert.runModal()
-        
-        // Download the DMG from GitHub releases
-        let dmgUrl = "https://github.com/devopsmariocom/A6Cutter/releases/download/\(latestVersion)/A6Cutter-\(latestVersion).dmg"
-        
-        guard let url = URL(string: dmgUrl) else {
-            showDownloadError("Invalid download URL")
-            return
-        }
-        
-        let task = URLSession.shared.downloadTask(with: url) { localURL, response, error in
-            DispatchQueue.main.async {
-                if let error = error {
-                    self.showDownloadError("Download failed: \(error.localizedDescription)")
-                    return
-                }
-                
-                guard let localURL = localURL else {
-                    self.showDownloadError("No local file received")
-                    return
-                }
-                
-                // Install the update
-                self.installUpdate(from: localURL)
+            // Open GitHub releases page for manual download
+            if let url = URL(string: "https://github.com/devopsmariocom/A6Cutter/releases/latest") {
+                NSWorkspace.shared.open(url)
             }
         }
-        
-        task.resume()
-    }
-    
-    private func installUpdate(from dmgURL: URL) {
-        // Mount the DMG
-        let mountTask = Process()
-        mountTask.launchPath = "/usr/bin/hdiutil"
-        mountTask.arguments = ["attach", dmgURL.path, "-nobrowse", "-noverify", "-noautoopen"]
-        
-        let pipe = Pipe()
-        mountTask.standardOutput = pipe
-        mountTask.standardError = pipe
-        
-        mountTask.launch()
-        mountTask.waitUntilExit()
-        
-        if mountTask.terminationStatus != 0 {
-            showDownloadError("Failed to mount DMG")
-            return
-        }
-        
-        // Get the mount point
-        let data = pipe.fileHandleForReading.readDataToEndOfFile()
-        let output = String(data: data, encoding: .utf8) ?? ""
-        let lines = output.components(separatedBy: .newlines)
-        let mountPoint = lines.first { $0.contains("/Volumes/") }?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        
-        if mountPoint.isEmpty {
-            showDownloadError("Could not find mount point")
-            return
-        }
-        
-        // Copy the app to Applications
-        let sourceApp = "\(mountPoint)/A6Cutter.app"
-        let destinationApp = "/Applications/A6Cutter.app"
-        
-        let copyTask = Process()
-        copyTask.launchPath = "/bin/rm"
-        copyTask.arguments = ["-rf", destinationApp]
-        copyTask.launch()
-        copyTask.waitUntilExit()
-        
-        let moveTask = Process()
-        moveTask.launchPath = "/bin/cp"
-        moveTask.arguments = ["-R", sourceApp, "/Applications/"]
-        moveTask.launch()
-        moveTask.waitUntilExit()
-        
-        if moveTask.terminationStatus != 0 {
-            showDownloadError("Failed to install update")
-            return
-        }
-        
-        // Unmount the DMG
-        let unmountTask = Process()
-        unmountTask.launchPath = "/usr/bin/hdiutil"
-        unmountTask.arguments = ["detach", mountPoint]
-        unmountTask.launch()
-        unmountTask.waitUntilExit()
-        
-        // Launch the updated app
-        let launchTask = Process()
-        launchTask.launchPath = "/usr/bin/open"
-        launchTask.arguments = [destinationApp]
-        launchTask.launch()
-        
-        // Exit current app
-        NSApplication.shared.terminate(nil)
-    }
-    
-    private func showDownloadError(_ message: String) {
-        let alert = NSAlert()
-        alert.messageText = "Update Failed"
-        alert.informativeText = message
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: "OK")
-        alert.runModal()
     }
     
     private func showNoUpdatesDialog() {
