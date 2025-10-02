@@ -113,11 +113,16 @@ jobs:
     - name: Download Sparkle tools
       run: |
         echo "📦 Downloading Sparkle tools..."
-        curl -L -o sparkle.tar.xz https://github.com/sparkle-project/Sparkle/releases/latest/download/Sparkle-2.6.0.tar.xz
+        # Get the latest Sparkle release URL
+        SPARKLE_URL=$(curl -s https://api.github.com/repos/sparkle-project/Sparkle/releases/latest | grep "browser_download_url.*tar.xz" | cut -d '"' -f 4)
+        echo "Downloading from: $SPARKLE_URL"
+        curl -L -o sparkle.tar.xz "$SPARKLE_URL"
         tar -xf sparkle.tar.xz
-        chmod +x Sparkle-2.6.0/bin/*
+        # Find the extracted directory (it might have a different version number)
+        SPARKLE_DIR=$(find . -maxdepth 1 -name "Sparkle-*" -type d | head -1)
+        chmod +x "$SPARKLE_DIR/bin/*"
         mkdir -p bin
-        cp Sparkle-2.6.0/bin/* ./bin/
+        cp "$SPARKLE_DIR/bin/*" ./bin/
         
     - name: Generate Sparkle keys (if not exist)
       run: |
@@ -158,8 +163,8 @@ jobs:
         # Generate appcast.xml
         ./bin/generate_appcast \
           --ed-key-file keys/ed25519_private_key.pem \
-          --download-url-prefix "https://github.com/mariovejlupek/A6Cutter/releases/download/" \
-          --full-release-notes-url "https://github.com/mariovejlupek/A6Cutter/releases" \
+          --download-url-prefix "https://github.com/devopsmariocom/A6Cutter/releases/download/" \
+          --full-release-notes-url "https://github.com/devopsmariocom/A6Cutter/releases" \
           releases/
         
         # Move appcast.xml to root
