@@ -78,7 +78,7 @@ struct A6CutterApp: App {
     }
     
     private func fetchLatestRelease(completion: @escaping (GitHubRelease?) -> Void) {
-        guard let url = URL(string: "https://api.github.com/repos/mariovejlupek/A6Cutter/releases/latest") else {
+        guard let url = URL(string: "https://api.github.com/repos/devopsmariocom/A6Cutter/releases/latest") else {
             completion(nil)
             return
         }
@@ -134,7 +134,7 @@ struct A6CutterApp: App {
         let response = alert.runModal()
         if response == .alertFirstButtonReturn {
             // Open GitHub releases page
-            if let url = URL(string: "https://github.com/mariovejlupek/A6Cutter/releases/latest") {
+            if let url = URL(string: "https://github.com/devopsmariocom/A6Cutter/releases/latest") {
                 NSWorkspace.shared.open(url)
             }
         }
