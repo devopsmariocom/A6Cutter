@@ -141,33 +141,45 @@ jobs:
         echo "📁 Contents after extraction:"
         ls -la
         
-        # Find the extracted directory (try different patterns)
-        SPARKLE_DIR=$(find . -maxdepth 1 -name "Sparkle-*" -type d | head -1)
-        if [ -z "$SPARKLE_DIR" ]; then
-          echo "🔍 Looking for any extracted directories..."
-          find . -maxdepth 1 -type d -name "*" | grep -v "^\.$"
-          echo "❌ Failed to find Sparkle directory after extraction"
-          exit 1
+        # Check if bin directory exists in current directory (Sparkle source extraction)
+        if [ -d "./bin" ]; then
+          echo "✅ Found Sparkle bin directory in current directory"
+          SPARKLE_BIN_DIR="./bin"
+        else
+          # Look for any directory with bin subdirectory
+          SPARKLE_DIR=$(find . -maxdepth 2 -name "bin" -type d | head -1 | dirname)
+          if [ -z "$SPARKLE_DIR" ]; then
+            echo "🔍 Looking for any extracted directories..."
+            find . -maxdepth 1 -type d -name "*" | grep -v "^\.$"
+            echo "❌ Failed to find Sparkle bin directory after extraction"
+            exit 1
+          fi
+          echo "✅ Found Sparkle directory: $SPARKLE_DIR"
+          SPARKLE_BIN_DIR="$SPARKLE_DIR/bin"
         fi
         
-        echo "✅ Found Sparkle directory: $SPARKLE_DIR"
-        echo "📁 Contents of $SPARKLE_DIR:"
-        ls -la "$SPARKLE_DIR"
+        echo "📁 Contents of $SPARKLE_BIN_DIR:"
+        ls -la "$SPARKLE_BIN_DIR"
         
-        # Check if bin directory exists
-        if [ ! -d "$SPARKLE_DIR/bin" ]; then
-          echo "❌ No bin directory found in $SPARKLE_DIR"
+        # Check if bin directory exists and has tools
+        if [ ! -d "$SPARKLE_BIN_DIR" ]; then
+          echo "❌ No bin directory found at $SPARKLE_BIN_DIR"
           echo "📁 Available directories:"
-          find "$SPARKLE_DIR" -type d
+          find . -type d -name "*bin*"
           exit 1
         fi
         
-        echo "📁 Contents of $SPARKLE_DIR/bin:"
-        ls -la "$SPARKLE_DIR/bin"
+        # Check if there are any executable files in bin
+        if [ -z "$(find "$SPARKLE_BIN_DIR" -type f -executable)" ]; then
+          echo "❌ No executable files found in $SPARKLE_BIN_DIR"
+          echo "📁 Contents:"
+          ls -la "$SPARKLE_BIN_DIR"
+          exit 1
+        fi
         
-        chmod +x "$SPARKLE_DIR/bin/*"
+        chmod +x "$SPARKLE_BIN_DIR"/*
         mkdir -p bin
-        cp "$SPARKLE_DIR/bin/*" ./bin/
+        cp "$SPARKLE_BIN_DIR"/* ./bin/
         echo "✅ Sparkle tools ready in ./bin/"
         echo "📁 Final bin contents:"
         ls -la ./bin/
