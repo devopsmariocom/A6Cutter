@@ -10,26 +10,11 @@ import SwiftData
 
 @main
 struct A6CutterApp: App {
-    @State private var isAboutPresented = false
+    @Environment(\.openWindow) private var openWindow
     
     private func openAboutWindow() {
-        // Open the About window using NSApp
-        if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == "about" }) {
-            window.makeKeyAndOrderFront(nil)
-        } else {
-            // Create new window if it doesn't exist
-            let aboutWindow = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 500, height: 600),
-                styleMask: [.titled, .closable, .miniaturizable],
-                backing: .buffered,
-                defer: false
-            )
-            aboutWindow.title = "About A6Cutter"
-            aboutWindow.identifier = NSUserInterfaceItemIdentifier("about")
-            aboutWindow.contentView = NSHostingView(rootView: AboutView())
-            aboutWindow.center()
-            aboutWindow.makeKeyAndOrderFront(nil)
-        }
+        // Open the About window using SwiftUI openWindow
+        openWindow(id: "about")
     }
     
     var sharedModelContainer: ModelContainer = {

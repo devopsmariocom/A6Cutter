@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct AboutView: View {
-    @Environment(\.dismissWindow) private var dismissWindow
+    @Environment(\.dismiss) private var dismiss
     
     var body: some View {
         VStack(spacing: 20) {
@@ -57,8 +57,8 @@ struct AboutView: View {
             .frame(maxHeight: 300)
             
             Button("Close") {
-                // Close only the About window using SwiftUI environment
-                dismissWindow(id: "about")
+                // Close the About window using SwiftUI dismiss
+                dismiss()
             }
             .buttonStyle(.borderedProminent)
             .padding(.top, 10)
