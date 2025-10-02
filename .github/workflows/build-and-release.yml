@@ -37,6 +37,79 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-deriveddata-
           
+    - name: Get version and hash info
+      id: version_info
+      run: |
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          VERSION=${GITHUB_REF#refs/tags/}
+        elif [[ -n "${{ github.event.inputs.version }}" ]]; then
+          VERSION=${{ github.event.inputs.version }}
+        else
+          VERSION=dev-$(date +%Y%m%d-%H%M%S)
+        fi
+        
+        # Get git hash
+        GIT_HASH=$(git rev-parse HEAD)
+        GIT_HASH_SHORT=$(git rev-parse --short HEAD)
+        
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "GIT_HASH=$GIT_HASH" >> $GITHUB_OUTPUT
+        echo "GIT_HASH_SHORT=$GIT_HASH_SHORT" >> $GITHUB_OUTPUT
+        
+        echo "Version: $VERSION"
+        echo "Git Hash: $GIT_HASH_SHORT"
+        
+    - name: Update Info.plist with version and hash
+      run: |
+        # Find the Info.plist file
+        INFO_PLIST=$(find . -name "Info.plist" -path "*/A6Cutter.app/Contents/Info.plist" | head -1)
+        
+        if [ -z "$INFO_PLIST" ]; then
+          # If not found, create a temporary one for build
+          INFO_PLIST="A6Cutter/Info.plist"
+          mkdir -p A6Cutter
+          cat > "$INFO_PLIST" << EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PList 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>CFBundleShortVersionString</key>
+            <string>${{ steps.version_info.outputs.VERSION }}</string>
+            <key>CFBundleVersion</key>
+            <string>${{ github.run_number }}</string>
+            <key>GitHash</key>
+            <string>${{ steps.version_info.outputs.GIT_HASH }}</string>
+        </dict>
+        </plist>
+        EOF
+        fi
+        
+        # Update existing Info.plist or create new one
+        if [ -f "$INFO_PLIST" ]; then
+          # Use plutil to update the plist
+          plutil -replace CFBundleShortVersionString -string "${{ steps.version_info.outputs.VERSION }}" "$INFO_PLIST"
+          plutil -replace CFBundleVersion -string "${{ github.run_number }}" "$INFO_PLIST"
+          plutil -replace GitHash -string "${{ steps.version_info.outputs.GIT_HASH }}" "$INFO_PLIST"
+        else
+          # Create new Info.plist
+          cat > "$INFO_PLIST" << EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD Plist 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>CFBundleShortVersionString</key>
+            <string>${{ steps.version_info.outputs.VERSION }}</string>
+            <key>CFBundleVersion</key>
+            <string>${{ github.run_number }}</string>
+            <key>GitHash</key>
+            <string>${{ steps.version_info.outputs.GIT_HASH }}</string>
+        </dict>
+        </plist>
+        EOF
+        fi
+        
+        echo "Updated Info.plist with version ${{ steps.version_info.outputs.VERSION }} and hash ${{ steps.version_info.outputs.GIT_HASH_SHORT }}"
+        
     - name: Build A6Cutter
       run: |
         xcodebuild -scheme A6Cutter -configuration Release -destination "platform=macOS" clean build
@@ -55,13 +128,8 @@ jobs:
     - name: Get version from tag
       id: get_version
       run: |
-        if [[ $GITHUB_REF == refs/tags/* ]]; then
-          echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-        elif [[ -n "${{ github.event.inputs.version }}" ]]; then
-          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
-        else
-          echo "VERSION=dev-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_OUTPUT
-        fi
+        # Use the version from the previous step
+        echo "VERSION=${{ steps.version_info.outputs.VERSION }}" >> $GITHUB_OUTPUT
         
     - name: Generate Release Notes
       id: release_notes
