@@ -128,16 +128,159 @@ struct A6CutterApp: App {
         alert.messageText = "Update Available"
         alert.informativeText = "A6Cutter \(latestVersion) is available. You currently have version \(currentVersion).\n\n\(releaseNotes)"
         alert.alertStyle = .informational
-        alert.addButton(withTitle: "Download Update")
+        alert.addButton(withTitle: "Download & Install")
         alert.addButton(withTitle: "Later")
         
         let response = alert.runModal()
         if response == .alertFirstButtonReturn {
-            // Open GitHub releases page for manual download
-            if let url = URL(string: "https://github.com/devopsmariocom/A6Cutter/releases/latest") {
-                NSWorkspace.shared.open(url)
+            // Download and install the update directly
+            downloadAndInstallUpdate(latestVersion: latestVersion)
+        }
+    }
+    
+    private func downloadAndInstallUpdate(latestVersion: String) {
+        // Download the DMG from GitHub releases
+        let dmgUrl = "https://github.com/devopsmariocom/A6Cutter/releases/download/\(latestVersion)/A6Cutter-\(latestVersion).dmg"
+        
+        guard let url = URL(string: dmgUrl) else {
+            showDownloadError("Invalid download URL")
+            return
+        }
+        
+        // Show progress dialog
+        let progressAlert = NSAlert()
+        progressAlert.messageText = "Downloading Update"
+        progressAlert.informativeText = "Please wait while the update is downloaded and installed..."
+        progressAlert.alertStyle = .informational
+        progressAlert.addButton(withTitle: "Cancel")
+        
+        // Show progress dialog
+        DispatchQueue.main.async {
+            let response = progressAlert.runModal()
+            if response == .alertFirstButtonReturn {
+                // User cancelled
+                return
             }
         }
+        
+        let task = URLSession.shared.downloadTask(with: url) { localURL, response, error in
+            DispatchQueue.main.async {
+                if let error = error {
+                    self.showDownloadError("Download failed: \(error.localizedDescription)")
+                    return
+                }
+                
+                guard let localURL = localURL else {
+                    self.showDownloadError("No local file received")
+                    return
+                }
+                
+                // Install the update
+                self.installUpdate(from: localURL)
+            }
+        }
+        
+        task.resume()
+    }
+    
+    private func installUpdate(from dmgURL: URL) {
+        // Mount the DMG
+        let mountTask = Process()
+        mountTask.launchPath = "/usr/bin/hdiutil"
+        mountTask.arguments = ["attach", dmgURL.path, "-nobrowse", "-noverify", "-noautoopen", "-readonly"]
+        
+        let pipe = Pipe()
+        mountTask.standardOutput = pipe
+        mountTask.standardError = pipe
+        
+        mountTask.launch()
+        mountTask.waitUntilExit()
+        
+        if mountTask.terminationStatus != 0 {
+            let errorData = pipe.fileHandleForReading.readDataToEndOfFile()
+            let errorOutput = String(data: errorData, encoding: .utf8) ?? "Unknown error"
+            showDownloadError("Failed to mount DMG: \(errorOutput)")
+            return
+        }
+        
+        // Get the mount point from output
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        let output = String(data: data, encoding: .utf8) ?? ""
+        let lines = output.components(separatedBy: .newlines)
+        
+        // Find the mount point - hdiutil outputs something like "/dev/disk2s1	/Volumes/A6Cutter"
+        var mountPoint = ""
+        for line in lines {
+            if line.contains("/Volumes/") {
+                let components = line.components(separatedBy: .whitespaces)
+                for component in components {
+                    if component.hasPrefix("/Volumes/") {
+                        mountPoint = component
+                        break
+                    }
+                }
+                if !mountPoint.isEmpty { break }
+            }
+        }
+        
+        if mountPoint.isEmpty {
+            showDownloadError("Could not find mount point in: \(output)")
+            return
+        }
+        
+        // Copy the app to Applications
+        let sourceApp = "\(mountPoint)/A6Cutter.app"
+        let destinationApp = "/Applications/A6Cutter.app"
+        
+        // Check if source app exists
+        if !FileManager.default.fileExists(atPath: sourceApp) {
+            showDownloadError("A6Cutter.app not found in DMG at: \(sourceApp)")
+            return
+        }
+        
+        // Remove existing app
+        let removeTask = Process()
+        removeTask.launchPath = "/bin/rm"
+        removeTask.arguments = ["-rf", destinationApp]
+        removeTask.launch()
+        removeTask.waitUntilExit()
+        
+        // Copy new app
+        let copyTask = Process()
+        copyTask.launchPath = "/bin/cp"
+        copyTask.arguments = ["-R", sourceApp, "/Applications/"]
+        copyTask.launch()
+        copyTask.waitUntilExit()
+        
+        if copyTask.terminationStatus != 0 {
+            showDownloadError("Failed to copy app to Applications folder")
+            return
+        }
+        
+        // Unmount the DMG
+        let unmountTask = Process()
+        unmountTask.launchPath = "/usr/bin/hdiutil"
+        unmountTask.arguments = ["detach", mountPoint]
+        unmountTask.launch()
+        unmountTask.waitUntilExit()
+        
+        // Launch the updated app
+        let launchTask = Process()
+        launchTask.launchPath = "/usr/bin/open"
+        launchTask.arguments = [destinationApp]
+        launchTask.launch()
+        
+        // Exit current app
+        NSApplication.shared.terminate(nil)
+    }
+    
+    private func showDownloadError(_ message: String) {
+        let alert = NSAlert()
+        alert.messageText = "Update Failed"
+        alert.informativeText = message
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
     
     private func showNoUpdatesDialog() {
