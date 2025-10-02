@@ -746,10 +746,21 @@ struct ContentView: View {
         
         saveSettings()
         
-        // If we have a loaded PDF, regenerate it with new preset settings
+        // If we have a loaded PDF, force complete reload to update preview
         if originalDocument != nil {
             print("🔄 Přenačítám PDF s novým presetem: \(presetName)")
-            regeneratePDF()
+            
+            // Force complete PDF reload to trigger preview update
+            let tempDocument = originalDocument
+            originalDocument = nil
+            cutDocument = nil
+            pageCount = 0
+            
+            // Small delay to ensure UI updates, then reload
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                self.originalDocument = tempDocument
+                self.regeneratePDF()
+            }
         }
     }
     
