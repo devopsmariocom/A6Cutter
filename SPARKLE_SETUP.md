@@ -1,80 +1,80 @@
 # 🔄 Sparkle Auto-Updater Setup
 
-Tento dokument popisuje nastavení automatického updateru pro A6Cutter pomocí Sparkle frameworku.
+This document describes the setup of automatic updater for A6Cutter using the Sparkle framework.
 
-## 📋 Přehled
+## 📋 Overview
 
-Sparkle umožňuje uživatelům automaticky stahovat a instalovat aktualizace aplikace bez nutnosti manuálního stažení z GitHubu.
+Sparkle allows users to automatically download and install application updates without the need for manual downloads from GitHub.
 
-## 🛠️ Nastavení
+## 🛠️ Setup
 
-### 1. Lokální vývoj
+### 1. Local Development
 
 ```bash
-# Stáhni Sparkle tools
+# Download Sparkle tools
 curl -L -o sparkle.tar.xz https://github.com/sparkle-project/Sparkle/releases/latest/download/Sparkle-2.6.0.tar.xz
 tar -xf sparkle.tar.xz
 mkdir -p bin
 cp Sparkle-2.6.0/bin/* ./bin/
 
-# Vygeneruj klíče (pouze jednou)
+# Generate keys (only once)
 ./scripts/generate_sparkle_keys.sh
 
-# Vygeneruj appcast.xml
+# Generate appcast.xml
 ./scripts/generate_appcast.sh
 ```
 
 ### 2. GitHub Actions
 
-Workflow automaticky:
-- ✅ Stáhne Sparkle tools
-- ✅ Vygeneruje klíče (pokud neexistují)
-- ✅ Vytvoří appcast.xml
-- ✅ Přidá appcast.xml do release
+The workflow automatically:
+- ✅ Downloads Sparkle tools
+- ✅ Generates keys (if they don't exist)
+- ✅ Creates appcast.xml
+- ✅ Adds appcast.xml to release
 
-## 🔑 Klíče a bezpečnost
+## 🔑 Keys and Security
 
-### Soukromý klíč
-- **Umístění:** `keys/ed25519_private_key.pem`
-- **Bezpečnost:** NIKDY necommitovat do Git!
-- **Účel:** Podepisování DMG souborů
+### Private Key
+- **Location:** `keys/ed25519_private_key.pem`
+- **Security:** NEVER commit to Git!
+- **Purpose:** Signing DMG files
 
-### Veřejný klíč
-- **Umístění:** `keys/ed25519_public_key.pem`
-- **Účel:** Ověřování podpisů v aplikaci
-- **Info.plist:** Automaticky přidán do `SUPublicEDSAKey`
+### Public Key
+- **Location:** `keys/ed25519_public_key.pem`
+- **Purpose:** Verifying signatures in the app
+- **Info.plist:** Automatically added to `SUPublicEDSAKey`
 
 ## 📡 Appcast.xml
 
-### Co to je?
-- XML soubor obsahující informace o dostupných aktualizacích
-- Sparkle ho používá k detekci nových verzí
-- Automaticky generován při každém release
+### What is it?
+- XML file containing information about available updates
+- Sparkle uses it to detect new versions
+- Automatically generated on each release
 
-### URL struktura
+### URL Structure
 ```
 https://github.com/mariovejlupek/A6Cutter/releases.atom
 ```
 
-## 🚀 Jak to funguje
+## 🚀 How it Works
 
-### 1. Uživatel otevře aplikaci
-- Sparkle automaticky kontroluje aktualizace
-- Kontrola probíhá každých 24 hodin (nastavitelné)
+### 1. User opens the app
+- Sparkle automatically checks for updates
+- Check runs every 24 hours (configurable)
 
-### 2. Nalezena nová verze
-- Zobrazí se notifikace
-- Uživatel může stáhnout a nainstalovat
+### 2. New version found
+- Notification is displayed
+- User can download and install
 
-### 3. Instalace
-- Stáhne DMG z GitHub releases
-- Ověří podpis pomocí veřejného klíče
-- Nainstaluje novou verzi
-- Restartuje aplikaci
+### 3. Installation
+- Downloads DMG from GitHub releases
+- Verifies signature using public key
+- Installs new version
+- Restarts the application
 
-## ⚙️ Konfigurace
+## ⚙️ Configuration
 
-### Info.plist nastavení
+### Info.plist Settings
 
 ```xml
 <key>SUFeedURL</key>
@@ -87,62 +87,62 @@ https://github.com/mariovejlupek/A6Cutter/releases.atom
 <true/>
 
 <key>SUCheckInterval</key>
-<integer>86400</integer> <!-- 24 hodin -->
+<integer>86400</integer> <!-- 24 hours -->
 ```
 
-### Menu položky
+### Menu Items
 
-Aplikace automaticky přidá:
-- **"Check for Updates..."** v A6Cutter menu
-- **"Check for Updates..."** v About dialogu
+The app automatically adds:
+- **"Check for Updates..."** in A6Cutter menu
+- **"Check for Updates..."** in About dialog
 
-## 🧪 Testování
+## 🧪 Testing
 
-### Lokální test
+### Local Test
 ```bash
-# Vytvoř test release
+# Create test release
 git tag v1.0.1
 git push origin v1.0.1
 
-# GitHub Actions vytvoří release s appcast.xml
+# GitHub Actions will create release with appcast.xml
 ```
 
-### Debug režim
+### Debug Mode
 ```swift
-// V A6CutterApp.swift
+// In A6CutterApp.swift
 updaterController.updater.checkForUpdates()
 ```
 
 ## 🔧 Troubleshooting
 
-### Problém: "No updates found"
-- ✅ Zkontroluj `SUFeedURL` v Info.plist
-- ✅ Ověř, že appcast.xml je dostupný
-- ✅ Zkontroluj, že DMG je podepsaný
+### Problem: "No updates found"
+- ✅ Check `SUFeedURL` in Info.plist
+- ✅ Verify that appcast.xml is available
+- ✅ Check that DMG is signed
 
-### Problém: "Invalid signature"
-- ✅ Ověř, že `SUPublicEDSAKey` je správný
-- ✅ Zkontroluj, že soukromý klíč je správný
-- ✅ Regeneruj klíče pokud je potřeba
+### Problem: "Invalid signature"
+- ✅ Verify that `SUPublicEDSAKey` is correct
+- ✅ Check that private key is correct
+- ✅ Regenerate keys if needed
 
-### Problém: "Download failed"
-- ✅ Zkontroluj internetové připojení
-- ✅ Ověř, že DMG URL je dostupný
-- ✅ Zkontroluj GitHub permissions
+### Problem: "Download failed"
+- ✅ Check internet connection
+- ✅ Verify that DMG URL is available
+- ✅ Check GitHub permissions
 
-## 📚 Užitečné odkazy
+## 📚 Useful Links
 
 - [Sparkle Documentation](https://sparkle-project.org/documentation/)
 - [Sparkle GitHub](https://github.com/sparkle-project/Sparkle)
 - [Code Signing Guide](https://sparkle-project.org/documentation/code-signing/)
 
-## 🎯 Další kroky
+## 🎯 Next Steps
 
-1. **První release:** Vytvoř tag `v1.0.0`
-2. **Test:** Otevři aplikaci a zkontroluj "Check for Updates"
-3. **Druhý release:** Vytvoř tag `v1.0.1` a otestuj auto-update
-4. **Monitoring:** Sleduj GitHub Actions logs
+1. **First release:** Create tag `v1.0.0`
+2. **Test:** Open the app and check "Check for Updates"
+3. **Second release:** Create tag `v1.0.1` and test auto-update
+4. **Monitoring:** Watch GitHub Actions logs
 
 ---
 
-**Poznámka:** Tento setup je plně automatický. Stačí vytvořit Git tag a GitHub Actions se postará o zbytek! 🚀
+**Note:** This setup is fully automatic. Just create a Git tag and GitHub Actions will handle the rest! 🚀

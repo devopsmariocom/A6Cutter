@@ -7,7 +7,7 @@
 
 import SwiftUI
 import SwiftData
-// import Sparkle // TODO: Add Sparkle package dependency
+// import Sparkle // TODO: Add Sparkle package dependency in Xcode
 
 @main
 struct A6CutterApp: App {
