@@ -180,9 +180,17 @@ jobs:
         
         echo "✅ Found $EXECUTABLE_FILES executable files in $SPARKLE_BIN_DIR"
         
-        chmod +x "$SPARKLE_BIN_DIR"/*
-        mkdir -p bin
-        cp "$SPARKLE_BIN_DIR"/* ./bin/
+        # Check if we're already in the right directory
+        if [ "$SPARKLE_BIN_DIR" = "./bin" ]; then
+          echo "✅ Sparkle tools already in correct location: ./bin"
+          chmod +x ./bin/*
+        else
+          echo "📁 Copying tools from $SPARKLE_BIN_DIR to ./bin"
+          chmod +x "$SPARKLE_BIN_DIR"/*
+          mkdir -p bin
+          cp "$SPARKLE_BIN_DIR"/* ./bin/
+        fi
+        
         echo "✅ Sparkle tools ready in ./bin/"
         echo "📁 Final bin contents:"
         ls -la ./bin/
