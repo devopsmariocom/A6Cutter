@@ -46,6 +46,9 @@ struct ContentView: View {
     private let rotationEnabledKey = "rotationEnabled"
     private let cuttingEnabledKey = "cuttingEnabled"
     private let skipPagesEnabledKey = "skipPagesEnabled"
+    private let modificationsEnabledKey = "modificationsEnabled"
+    private let presetsKey = "presets"
+    private let currentPresetKey = "currentPreset"
     
     // Parametry pro posunutí řezů
     @State private var horizontalShift: Double = -15.0
@@ -67,6 +70,13 @@ struct ContentView: View {
     @State private var rotationEnabled: Bool = true
     @State private var cuttingEnabled: Bool = true
     @State private var skipPagesEnabled: Bool = true
+    @State private var modificationsEnabled: Bool = false
+    
+    // Presets
+    @State private var presets: [String: [String: Any]] = [:]
+    @State private var currentPreset: String = "FedEx"
+    @State private var isAddingNewPreset: Bool = false
+    @State private var newPresetName: String = ""
     
     private var leftPanel: some View {
         VStack(spacing: 16) {
@@ -100,7 +110,21 @@ struct ContentView: View {
                 skipPagesSection
             }
             
+            // Presets section
+            presetsSection
+            
             Spacer()
+            
+            // Enable modifications checkbox
+            VStack(spacing: 8) {
+                Toggle("Enable modifications".localized, isOn: $modificationsEnabled)
+                    .toggleStyle(SwitchToggleStyle(tint: .blue))
+                    .font(.headline)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 12)
+                    .background(Color.blue.opacity(0.1))
+                    .cornerRadius(8)
+            }
             
             openPDFButton
             if let doc = cutDocument {
@@ -146,6 +170,7 @@ struct ContentView: View {
                         .font(.title3)
                 }
                 .buttonStyle(PlainButtonStyle())
+                .disabled(!modificationsEnabled)
             }
             .padding(.horizontal, 16)
             .padding(.top, 16)
@@ -156,7 +181,7 @@ struct ContentView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 16)
                 .opacity(isEnabled.wrappedValue ? 1.0 : 0.4)
-                .disabled(!isEnabled.wrappedValue)
+                .disabled(!isEnabled.wrappedValue || !modificationsEnabled)
         }
         .frame(width: 300, height: 120)
         .background(isEnabled.wrappedValue ? color.opacity(0.08) : Color.gray.opacity(0.05))
@@ -164,6 +189,26 @@ struct ContentView: View {
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(isEnabled.wrappedValue ? color.opacity(0.3) : Color.gray.opacity(0.2), lineWidth: 2)
+        )
+        .overlay(
+            // Overlay pro "Disabled modification" když je modificationsEnabled = false
+            Group {
+                if !modificationsEnabled {
+                    ZStack {
+                        Color.black.opacity(0.6)
+                            .cornerRadius(12)
+                        VStack {
+                            Image(systemName: "lock.fill")
+                                .font(.title2)
+                                .foregroundColor(.white)
+                            Text("Disabled modification".localized)
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .multilineTextAlignment(.center)
+                        }
+                    }
+                }
+            }
         )
     }
     
@@ -218,6 +263,94 @@ struct ContentView: View {
     }
     
     
+    private var presetsSection: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text("Presety".localized)
+                    .font(.headline)
+                    .foregroundColor(.primary)
+                Spacer()
+                
+                // Add new preset button
+                Button(action: {
+                    isAddingNewPreset = true
+                    newPresetName = ""
+                }) {
+                    Image(systemName: "plus")
+                        .foregroundColor(.blue)
+                }
+                .buttonStyle(PlainButtonStyle())
+                .disabled(!modificationsEnabled)
+            }
+            
+            // Presets list
+            VStack(spacing: 4) {
+                ForEach(Array(presets.keys.sorted()), id: \.self) { presetName in
+                    HStack {
+                        Button(action: {
+                            currentPreset = presetName
+                            applyPreset(presetName)
+                            savePresets() // Save the current preset selection
+                        }) {
+                            HStack {
+                                Image(systemName: currentPreset == presetName ? "checkmark.circle.fill" : "circle")
+                                    .foregroundColor(currentPreset == presetName ? .blue : .gray)
+                                
+                                Text(presetName)
+                                    .foregroundColor(.primary)
+                                    .font(.system(size: 14))
+                                
+                                Spacer()
+                            }
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 6)
+                            .background(currentPreset == presetName ? Color.blue.opacity(0.1) : Color.clear)
+                            .cornerRadius(6)
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                        
+                        // Delete button (only for custom presets)
+                        if presetName != "Default" && presetName != "FedEx" {
+                            Button(action: {
+                                deletePreset(presetName)
+                            }) {
+                                Image(systemName: "trash")
+                                    .foregroundColor(.red)
+                                    .font(.system(size: 12))
+                            }
+                            .buttonStyle(PlainButtonStyle())
+                            .disabled(!modificationsEnabled)
+                        }
+                    }
+                }
+            }
+            
+            // Add new preset input
+            if isAddingNewPreset {
+                HStack {
+                    TextField("Název nového presetu", text: $newPresetName)
+                        .textFieldStyle(RoundedBorderTextFieldStyle())
+                        .onSubmit {
+                            addNewPreset()
+                        }
+                    
+                    Button("Přidat") {
+                        addNewPreset()
+                    }
+                    .disabled(newPresetName.isEmpty)
+                    
+                    Button("Zrušit") {
+                        isAddingNewPreset = false
+                        newPresetName = ""
+                    }
+                }
+            }
+        }
+        .padding()
+        .background(Color.purple.opacity(0.1))
+        .cornerRadius(12)
+    }
+    
     private var skipPagesSection: some View {
         HStack {
             Text("Čísla stránek".localized + ":")
@@ -246,6 +379,7 @@ struct ContentView: View {
         }
         .buttonStyle(.borderedProminent)
         .controlSize(.large)
+        .keyboardShortcut("o", modifiers: .command)
     }
     
     private func printSection(doc: PDFDocument) -> some View {
@@ -261,6 +395,7 @@ struct ContentView: View {
             .controlSize(.large)
             .focused($isPrintButtonFocused)
             .keyboardShortcut(.defaultAction)
+            .keyboardShortcut("p", modifiers: [.command, .shift])
         }
     }
     
@@ -341,6 +476,9 @@ struct ContentView: View {
         .onChange(of: skipPagesEnabled) { _ in
             saveSettings()
             regeneratePDF()
+        }
+        .onChange(of: modificationsEnabled) { _ in
+            saveSettings()
         }
         .fileImporter(
             isPresented: $isImporterPresented,
@@ -482,21 +620,176 @@ struct ContentView: View {
         UserDefaults.standard.set(rotationEnabled, forKey: rotationEnabledKey)
         UserDefaults.standard.set(cuttingEnabled, forKey: cuttingEnabledKey)
         UserDefaults.standard.set(skipPagesEnabled, forKey: skipPagesEnabledKey)
+        UserDefaults.standard.set(modificationsEnabled, forKey: modificationsEnabledKey)
         print("💾 Nastavení uložena")
     }
     
     // Funkce pro načítání nastavení
     private func loadSettings() {
-        horizontalShift = UserDefaults.standard.object(forKey: horizontalShiftKey) as? Double ?? -15.0
-        verticalShift = UserDefaults.standard.object(forKey: verticalShiftKey) as? Double ?? 30.0
-        skipPages = UserDefaults.standard.string(forKey: skipPagesKey) ?? "2,4,5,6"
-        rotateToPortrait = UserDefaults.standard.object(forKey: rotateToPortraitKey) as? Bool ?? true
+        horizontalShift = UserDefaults.standard.object(forKey: horizontalShiftKey) as? Double ?? 0.0
+        verticalShift = UserDefaults.standard.object(forKey: verticalShiftKey) as? Double ?? 0.0
+        skipPages = UserDefaults.standard.string(forKey: skipPagesKey) ?? ""
+        rotateToPortrait = UserDefaults.standard.object(forKey: rotateToPortraitKey) as? Bool ?? false
         disableCutting = UserDefaults.standard.object(forKey: disableCuttingKey) as? Bool ?? false
         rotateClockwise = UserDefaults.standard.object(forKey: rotateClockwiseKey) as? Bool ?? true
-        rotationEnabled = UserDefaults.standard.object(forKey: rotationEnabledKey) as? Bool ?? true
+        rotationEnabled = UserDefaults.standard.object(forKey: rotationEnabledKey) as? Bool ?? false
         cuttingEnabled = UserDefaults.standard.object(forKey: cuttingEnabledKey) as? Bool ?? true
-        skipPagesEnabled = UserDefaults.standard.object(forKey: skipPagesEnabledKey) as? Bool ?? true
+        skipPagesEnabled = UserDefaults.standard.object(forKey: skipPagesEnabledKey) as? Bool ?? false
+        modificationsEnabled = UserDefaults.standard.object(forKey: modificationsEnabledKey) as? Bool ?? false
+        
+        // Load presets
+        loadPresets()
         print("📂 Nastavení načtena")
+    }
+    
+    private func loadPresets() {
+        // Initialize presets if none exist
+        if UserDefaults.standard.object(forKey: presetsKey) == nil {
+            print("🔧 Inicializuji nové presety...")
+            let defaultPreset: [String: Any] = [
+                "horizontalShift": 0.0,
+                "verticalShift": 0.0,
+                "skipPages": "",
+                "rotateToPortrait": false,
+                "disableCutting": false,
+                "rotateClockwise": true,
+                "rotationEnabled": false,
+                "cuttingEnabled": true,
+                "skipPagesEnabled": false
+            ]
+            
+            let fedExPreset: [String: Any] = [
+                "horizontalShift": -15.0,
+                "verticalShift": 30.0,
+                "skipPages": "2,4,5,6",
+                "rotateToPortrait": true,
+                "disableCutting": false,
+                "rotateClockwise": true,
+                "rotationEnabled": true,
+                "cuttingEnabled": true,
+                "skipPagesEnabled": true
+            ]
+            
+            presets = [
+                "Default": defaultPreset,
+                "FedEx": fedExPreset
+            ]
+            savePresets()
+        } else {
+            if let data = UserDefaults.standard.data(forKey: presetsKey),
+               let loadedPresets = try? JSONSerialization.jsonObject(with: data) as? [String: [String: Any]] {
+                presets = loadedPresets
+                print("📂 Načteny presety: \(Array(presets.keys))")
+            }
+        }
+        
+        // Ensure Default and FedEx presets always exist
+        if !presets.keys.contains("Default") {
+            let defaultPreset: [String: Any] = [
+                "horizontalShift": 0.0,
+                "verticalShift": 0.0,
+                "skipPages": "",
+                "rotateToPortrait": false,
+                "disableCutting": false,
+                "rotateClockwise": true,
+                "rotationEnabled": false,
+                "cuttingEnabled": true,
+                "skipPagesEnabled": false
+            ]
+            presets["Default"] = defaultPreset
+        }
+        
+        if !presets.keys.contains("FedEx") {
+            let fedExPreset: [String: Any] = [
+                "horizontalShift": -15.0,
+                "verticalShift": 30.0,
+                "skipPages": "2,4,5,6",
+                "rotateToPortrait": true,
+                "disableCutting": false,
+                "rotateClockwise": true,
+                "rotationEnabled": true,
+                "cuttingEnabled": true,
+                "skipPagesEnabled": true
+            ]
+            presets["FedEx"] = fedExPreset
+        }
+        
+        // Load current preset
+        currentPreset = UserDefaults.standard.string(forKey: currentPresetKey) ?? "Default"
+        
+        print("🎯 Aktuální preset: \(currentPreset)")
+        print("📋 Dostupné presety: \(Array(presets.keys.sorted()))")
+        
+        // Apply current preset
+        applyPreset(currentPreset)
+    }
+    
+    private func savePresets() {
+        if let data = try? JSONSerialization.data(withJSONObject: presets) {
+            UserDefaults.standard.set(data, forKey: presetsKey)
+        }
+        UserDefaults.standard.set(currentPreset, forKey: currentPresetKey)
+    }
+    
+    private func applyPreset(_ presetName: String) {
+        guard let preset = presets[presetName] else { return }
+        
+        horizontalShift = preset["horizontalShift"] as? Double ?? horizontalShift
+        verticalShift = preset["verticalShift"] as? Double ?? verticalShift
+        skipPages = preset["skipPages"] as? String ?? skipPages
+        rotateToPortrait = preset["rotateToPortrait"] as? Bool ?? rotateToPortrait
+        disableCutting = preset["disableCutting"] as? Bool ?? disableCutting
+        rotateClockwise = preset["rotateClockwise"] as? Bool ?? rotateClockwise
+        rotationEnabled = preset["rotationEnabled"] as? Bool ?? rotationEnabled
+        cuttingEnabled = preset["cuttingEnabled"] as? Bool ?? cuttingEnabled
+        skipPagesEnabled = preset["skipPagesEnabled"] as? Bool ?? skipPagesEnabled
+        
+        saveSettings()
+        
+        // If we have a loaded PDF, regenerate it with new preset settings
+        if originalDocument != nil {
+            print("🔄 Přenačítám PDF s novým presetem: \(presetName)")
+            regeneratePDF()
+        }
+    }
+    
+    private func addNewPreset() {
+        guard !newPresetName.isEmpty && !presets.keys.contains(newPresetName) else { return }
+        
+        // Create new preset with current settings
+        let newPreset: [String: Any] = [
+            "horizontalShift": horizontalShift,
+            "verticalShift": verticalShift,
+            "skipPages": skipPages,
+            "rotateToPortrait": rotateToPortrait,
+            "disableCutting": disableCutting,
+            "rotateClockwise": rotateClockwise,
+            "rotationEnabled": rotationEnabled,
+            "cuttingEnabled": cuttingEnabled,
+            "skipPagesEnabled": skipPagesEnabled
+        ]
+        
+        presets[newPresetName] = newPreset
+        currentPreset = newPresetName
+        savePresets()
+        
+        isAddingNewPreset = false
+        newPresetName = ""
+    }
+    
+    private func deletePreset(_ presetName: String) {
+        // Don't allow deletion of Default and FedEx presets
+        guard presetName != "Default" && presetName != "FedEx" else { return }
+        
+        presets.removeValue(forKey: presetName)
+        
+        // If we deleted the current preset, switch to Default
+        if currentPreset == presetName {
+            currentPreset = "Default"
+            applyPreset("Default")
+        }
+        
+        savePresets()
     }
     
     private func parseSkipPages() -> [Int] {
