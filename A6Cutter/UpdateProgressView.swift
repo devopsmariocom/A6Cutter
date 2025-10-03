@@ -218,7 +218,10 @@ struct UpdateProgressView: View {
     // MARK: - Update Steps
     
     private func downloadUpdate() async throws -> URL {
-        let dmgUrl = "https://github.com/devopsmariocom/A6Cutter/releases/download/\(latestVersion)/A6Cutter.dmg"
+        // latestVersion already has 'v' prefix removed in A6CutterApp.swift
+        // We need to add it back for the GitHub URL
+        let versionWithV = latestVersion.hasPrefix("v") ? latestVersion : "v\(latestVersion)"
+        let dmgUrl = "https://github.com/devopsmariocom/A6Cutter/releases/download/\(versionWithV)/A6Cutter-\(latestVersion).dmg"
         
         guard let url = URL(string: dmgUrl) else {
             throw UpdateError.invalidURL
