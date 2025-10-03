@@ -384,6 +384,93 @@ struct ContentView: View {
         .keyboardShortcut("o", modifiers: .command)
     }
     
+    // MARK: - Save Document Functions
+    
+    private func saveDocument(_ document: PDFDocument) {
+        // Vytvoříme nový dokument s filtrovanými stránkami
+        let filteredDocument = PDFDocument()
+        
+        if skipPagesEnabled {
+            let skipPagesList = parseSkipPages()
+            var pageIndex = 0
+            
+            for i in 0..<document.pageCount {
+                if !skipPagesList.contains(i + 1) {
+                    if let page = document.page(at: i) {
+                        filteredDocument.insert(page, at: pageIndex)
+                        pageIndex += 1
+                    }
+                }
+            }
+        } else {
+            // Pokud není skip pages povoleno, zkopírujeme všechny stránky
+            for i in 0..<document.pageCount {
+                if let page = document.page(at: i) {
+                    filteredDocument.insert(page, at: i)
+                }
+            }
+        }
+        
+        // Získáme název původního souboru
+        let originalFileName = getOriginalFileName()
+        let saveFileName = originalFileName.replacingOccurrences(of: ".pdf", with: "_A6Cutted.pdf")
+        
+        // Vytvoříme dočasný soubor
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(saveFileName)
+        
+        // Uložíme dokument
+        if filteredDocument.write(to: tempURL) {
+            // Otevřeme save dialog
+            let savePanel = NSSavePanel()
+            savePanel.nameFieldStringValue = saveFileName
+            savePanel.allowedContentTypes = [.pdf]
+            savePanel.title = "Uložit PDF"
+            
+            savePanel.begin { response in
+                if response == .OK, let url = savePanel.url {
+                    do {
+                        try FileManager.default.copyItem(at: tempURL, to: url)
+                        // Zobrazíme potvrzení
+                        DispatchQueue.main.async {
+                            let alert = NSAlert()
+                            alert.messageText = "PDF uloženo"
+                            alert.informativeText = "Soubor byl úspěšně uložen jako: \(url.lastPathComponent)"
+                            alert.alertStyle = .informational
+                            alert.addButton(withTitle: "OK")
+                            alert.runModal()
+                        }
+                    } catch {
+                        DispatchQueue.main.async {
+                            let alert = NSAlert()
+                            alert.messageText = "Chyba při ukládání"
+                            alert.informativeText = "Nepodařilo se uložit soubor: \(error.localizedDescription)"
+                            alert.alertStyle = .warning
+                            alert.addButton(withTitle: "OK")
+                            alert.runModal()
+                        }
+                    }
+                }
+                
+                // Vyčistíme dočasný soubor
+                try? FileManager.default.removeItem(at: tempURL)
+            }
+        } else {
+            let alert = NSAlert()
+            alert.messageText = "Chyba při ukládání"
+            alert.informativeText = "Nepodařilo se vytvořit PDF soubor"
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+        }
+    }
+    
+    private func getOriginalFileName() -> String {
+        // Použijeme uložený název původního souboru
+        if !originalFileName.isEmpty {
+            return originalFileName
+        }
+        return "document.pdf"
+    }
     
     private func printSection(doc: PDFDocument) -> some View {
         VStack(spacing: 12) {
@@ -1141,91 +1228,6 @@ struct PDFThumbnailRepresentable: NSViewRepresentable {
         }
     }
     
-    private func saveDocument(_ document: PDFDocument) {
-        // Vytvoříme nový dokument s filtrovanými stránkami
-        let filteredDocument = PDFDocument()
-        
-        if skipPagesEnabled {
-            let skipPagesList = parseSkipPages()
-            var pageIndex = 0
-            
-            for i in 0..<document.pageCount {
-                if !skipPagesList.contains(i + 1) {
-                    if let page = document.page(at: i) {
-                        filteredDocument.insert(page, at: pageIndex)
-                        pageIndex += 1
-                    }
-                }
-            }
-        } else {
-            // Pokud není skip pages povoleno, zkopírujeme všechny stránky
-            for i in 0..<document.pageCount {
-                if let page = document.page(at: i) {
-                    filteredDocument.insert(page, at: i)
-                }
-            }
-        }
-        
-        // Získáme název původního souboru
-        let originalFileName = getOriginalFileName()
-        let saveFileName = originalFileName.replacingOccurrences(of: ".pdf", with: "_A6Cutted.pdf")
-        
-        // Vytvoříme dočasný soubor
-        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(saveFileName)
-        
-        // Uložíme dokument
-        if filteredDocument.write(to: tempURL) {
-            // Otevřeme save dialog
-            let savePanel = NSSavePanel()
-            savePanel.nameFieldStringValue = saveFileName
-            savePanel.allowedContentTypes = [.pdf]
-            savePanel.title = "Uložit PDF"
-            
-            savePanel.begin { response in
-                if response == .OK, let url = savePanel.url {
-                    do {
-                        try FileManager.default.copyItem(at: tempURL, to: url)
-                        // Zobrazíme potvrzení
-                        DispatchQueue.main.async {
-                            let alert = NSAlert()
-                            alert.messageText = "PDF uloženo"
-                            alert.informativeText = "Soubor byl úspěšně uložen jako: \(url.lastPathComponent)"
-                            alert.alertStyle = .informational
-                            alert.addButton(withTitle: "OK")
-                            alert.runModal()
-                        }
-                    } catch {
-                        DispatchQueue.main.async {
-                            let alert = NSAlert()
-                            alert.messageText = "Chyba při ukládání"
-                            alert.informativeText = "Nepodařilo se uložit soubor: \(error.localizedDescription)"
-                            alert.alertStyle = .warning
-                            alert.addButton(withTitle: "OK")
-                            alert.runModal()
-                        }
-                    }
-                }
-                
-                // Vyčistíme dočasný soubor
-                try? FileManager.default.removeItem(at: tempURL)
-            }
-        } else {
-            let alert = NSAlert()
-            alert.messageText = "Chyba při ukládání"
-            alert.informativeText = "Nepodařilo se vytvořit PDF soubor"
-            alert.alertStyle = .warning
-            alert.addButton(withTitle: "OK")
-            alert.runModal()
-        }
-    }
-    
-    private func getOriginalFileName() -> String {
-        // Použijeme uložený název původního souboru
-        if !originalFileName.isEmpty {
-            return originalFileName
-        }
-        return "document.pdf"
-    }
 }
 
 // PDF stránka reprezentace pro macOS
