@@ -330,7 +330,7 @@ struct UpdateDebugView: View {
     
     private func downloadUpdate(latestVersion: String) async throws -> URL {
         let versionWithV = latestVersion.hasPrefix("v") ? latestVersion : "v\(latestVersion)"
-        let dmgUrl = "https://github.com/devopsmariocom/A6Cutter/releases/download/\(versionWithV)/A6Cutter-\(latestVersion).dmg"
+        let dmgUrl = "https://github.com/devopsmariocom/A6Cutter/releases/download/\(versionWithV)/A6Cutter.dmg"
         
         addLogMessage("📥 Stahuji z: \(dmgUrl)", isError: false)
         
