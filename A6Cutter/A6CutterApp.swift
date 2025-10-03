@@ -463,12 +463,12 @@ class A6CutterApp: App {
         .commands {
             CommandGroup(replacing: .appInfo) {
                 Button("About A6Cutter") {
-                    openAboutWindow()
+                    self.openAboutWindow()
                 }
             }
             CommandGroup(after: .appInfo) {
                 Button("Check for Updates...") {
-                    checkForUpdates()
+                    self.checkForUpdates()
                 }
             }
         }
