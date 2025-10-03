@@ -79,17 +79,21 @@ struct AboutView: View {
     
     private var buildNumber: String {
         if let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
-            // For local builds, CFBundleVersion is git commit hash
-            // For GitHub Actions builds, it might be a number
-            return build
+            // For local builds, CFBundleVersion is git commit hash (7 chars)
+            // For GitHub Actions builds, it's a build number
+            // Check if it looks like a git hash (7 chars, alphanumeric)
+            if build.count == 7 && build.allSatisfy({ $0.isLetter || $0.isNumber }) {
+                return build // Local build - git hash
+            } else {
+                return build // GitHub Actions build - build number
+            }
         }
         return "dev"
     }
     
     private var gitHash: String {
-        // V produkční verzi by toto bylo nastaveno během buildu
-        // Pro dev verzi vrátíme "dev"
         if let hash = Bundle.main.infoDictionary?["GitHash"] as? String {
+            // Show first 7 characters of git hash for readability
             return String(hash.prefix(7))
         }
         return "dev"
