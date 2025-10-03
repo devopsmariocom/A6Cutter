@@ -435,7 +435,23 @@ struct UpdateDebugView: View {
     
     private func runCommand(_ command: String, arguments: [String]) async throws -> String {
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/\(command)")
+        
+        // Use full path for common commands
+        let commandPath: String
+        switch command {
+        case "rm":
+            commandPath = "/bin/rm"
+        case "cp":
+            commandPath = "/bin/cp"
+        case "hdiutil":
+            commandPath = "/usr/bin/hdiutil"
+        case "open":
+            commandPath = "/usr/bin/open"
+        default:
+            commandPath = "/usr/bin/\(command)"
+        }
+        
+        process.executableURL = URL(fileURLWithPath: commandPath)
         process.arguments = arguments
         
         let pipe = Pipe()
