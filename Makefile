@@ -15,7 +15,7 @@ GIT_HASH ?= $(shell git rev-parse HEAD 2>/dev/null || echo "dev")
 # Directories
 BUILD_DIR = build
 DMG_DIR = $(BUILD_DIR)/dmg
-APP_PATH = /Users/$(USER)/Library/Developer/Xcode/DerivedData/$(APP_NAME)-*/Build/Products/$(CONFIGURATION)/$(APP_NAME).app
+APP_PATH = $(shell find /Users/$(USER)/Library/Developer/Xcode/DerivedData -name "$(APP_NAME).app" -path "*/Build/Products/$(CONFIGURATION)/*" 2>/dev/null | head -1)
 
 .PHONY: help clean build run dmg version-info
 
@@ -79,11 +79,34 @@ build: update-version
 
 run: build
 	@echo "🚀 Running $(APP_NAME)..."
-	open $(APP_PATH)
+	@if [ -z "$(APP_PATH)" ] || [ ! -d "$(APP_PATH)" ]; then \
+		echo "❌ App not found at expected location"; \
+		echo "📱 Searching for app..."; \
+		APP_PATH=$$(find /Users/$(USER)/Library/Developer/Xcode/DerivedData -name "$(APP_NAME).app" -path "*/Build/Products/$(CONFIGURATION)/*" 2>/dev/null | head -1); \
+		if [ -z "$$APP_PATH" ]; then \
+			echo "❌ App not found. Please run 'make build' first."; \
+			exit 1; \
+		fi; \
+		echo "📱 Found app at: $$APP_PATH"; \
+		open "$$APP_PATH"; \
+	else \
+		echo "📱 Opening app at: $(APP_PATH)"; \
+		open "$(APP_PATH)"; \
+	fi
 
 install: build
 	@echo "📦 Installing $(APP_NAME) to Applications..."
-	cp -R $(APP_PATH) /Applications/
+	@if [ -z "$(APP_PATH)" ] || [ ! -d "$(APP_PATH)" ]; then \
+		echo "❌ App not found at expected location"; \
+		echo "📱 Searching for app..."; \
+		APP_PATH=$$(find /Users/$(USER)/Library/Developer/Xcode/DerivedData -name "$(APP_NAME).app" -path "*/Build/Products/$(CONFIGURATION)/*" 2>/dev/null | head -1); \
+		if [ -z "$$APP_PATH" ]; then \
+			echo "❌ App not found. Please run 'make build' first."; \
+			exit 1; \
+		fi; \
+	fi
+	@echo "📱 Installing from: $(APP_PATH)"
+	cp -R "$(APP_PATH)" /Applications/
 	@echo "✅ $(APP_NAME) installed to /Applications/"
 
 dmg: build

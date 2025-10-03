@@ -108,7 +108,12 @@ run_app() {
     APP_PATH=$(find /Users/$(whoami)/Library/Developer/Xcode/DerivedData -name "A6Cutter.app" -path "*/Build/Products/Release/*" 2>/dev/null | head -1)
     
     if [ -z "$APP_PATH" ]; then
-        print_error "Could not find built app. Please run 'make build' first."
+        print_error "Could not find built app. Please run './dev.sh build' first."
+        exit 1
+    fi
+    
+    if [ ! -d "$APP_PATH" ]; then
+        print_error "App found but is not a valid directory: $APP_PATH"
         exit 1
     fi
     
