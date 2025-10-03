@@ -27,7 +27,7 @@ struct GitHubRelease: Codable, Sendable {
 }
 
 @main
-struct A6CutterApp: App {
+class A6CutterApp: App {
     @Environment(\.openWindow) private var openWindow
     
     // Sparkle updater controller - TODO: Uncomment after adding Sparkle package
@@ -219,13 +219,17 @@ struct A6CutterApp: App {
         mainView.addSubview(logTextView!)
         
         // Expand/Collapse button
-        let expandButton = NSButton(title: "Show Log", target: self, action: #selector(toggleLog))
+        let expandButton = NSButton(title: "Show Log", target: nil, action: nil)
         expandButton.frame = NSRect(x: 20, y: 10, width: 80, height: 25)
+        expandButton.target = self
+        expandButton.action = #selector(toggleLogAction)
         mainView.addSubview(expandButton)
         
         // Cancel button
-        let cancelButton = NSButton(title: "Cancel", target: self, action: #selector(cancelUpdate))
+        let cancelButton = NSButton(title: "Cancel", target: nil, action: nil)
         cancelButton.frame = NSRect(x: 400, y: 10, width: 80, height: 25)
+        cancelButton.target = self
+        cancelButton.action = #selector(cancelUpdateAction)
         mainView.addSubview(cancelButton)
         
         window.contentView = mainView
@@ -234,7 +238,7 @@ struct A6CutterApp: App {
         updateProgress("Starting update process...", isError: false)
     }
     
-    @objc private func toggleLog() {
+    @objc private func toggleLogAction() {
         guard let logView = logTextView else { return }
         
         isExpanded.toggle()
@@ -248,7 +252,7 @@ struct A6CutterApp: App {
         }
     }
     
-    @objc private func cancelUpdate() {
+    @objc private func cancelUpdateAction() {
         progressWindow?.close()
         progressWindow = nil
     }
