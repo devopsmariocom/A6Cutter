@@ -85,7 +85,11 @@ struct A6CutterApp: App {
     }
     
     private func fetchLatestRelease(completion: @escaping (GitHubRelease?) -> Void) {
-        guard let url = URL(string: "https://api.github.com/repos/devopsmariocom/A6Cutter/releases/latest") else {
+        let urlString = "https://api.github.com/repos/devopsmariocom/A6Cutter/releases/latest"
+        print("DEBUG: Fetching from URL: \(urlString)")
+        
+        guard let url = URL(string: urlString) else {
+            print("DEBUG: Failed to create URL from string: \(urlString)")
             completion(nil)
             return
         }
@@ -94,17 +98,26 @@ struct A6CutterApp: App {
         request.setValue("application/vnd.github.v3+json", forHTTPHeaderField: "Accept")
         request.setValue("A6Cutter/\(getCurrentAppVersion())", forHTTPHeaderField: "User-Agent")
         
+        print("DEBUG: Making request with headers: \(request.allHTTPHeaderFields ?? [:])")
+        
         URLSession.shared.dataTask(with: request) { data, response, error in
             guard let data = data, error == nil else {
+                print("DEBUG: GitHub API error: \(error?.localizedDescription ?? "Unknown error")")
                 completion(nil)
                 return
             }
             
+            // Debug: Print raw response
+            if let responseString = String(data: data, encoding: .utf8) {
+                print("DEBUG: GitHub API response: \(responseString)")
+            }
+            
             do {
                 let release = try JSONDecoder().decode(GitHubRelease.self, from: data)
+                print("DEBUG: Parsed release - tagName: '\(release.tagName)', name: '\(release.name)'")
                 completion(release)
             } catch {
-                print("Error decoding GitHub release: \(error)")
+                print("DEBUG: JSON decode error: \(error)")
                 completion(nil)
             }
         }.resume()
