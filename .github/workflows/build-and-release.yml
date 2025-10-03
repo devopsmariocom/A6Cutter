@@ -64,14 +64,26 @@ jobs:
         # Update the source Info.plist before building
         INFO_PLIST="A6Cutter/Info.plist"
         
+        # Debug: Show current Info.plist content
+        echo "📄 Current Info.plist content:"
+        plutil -p "$INFO_PLIST" | grep -E "(CFBundleShortVersionString|CFBundleVersion|GitHash)" || echo "No version info found"
+        
         # Update version and build number
+        echo "🔧 Updating CFBundleShortVersionString to: ${{ steps.version_info.outputs.VERSION }}"
         plutil -replace CFBundleShortVersionString -string "${{ steps.version_info.outputs.VERSION }}" "$INFO_PLIST"
+        
+        echo "🔧 Updating CFBundleVersion to: ${{ github.run_number }}"
         plutil -replace CFBundleVersion -string "${{ github.run_number }}" "$INFO_PLIST"
         
         # Add git hash to Info.plist
+        echo "🔧 Updating GitHash to: ${{ steps.version_info.outputs.GIT_HASH }}"
         plutil -replace GitHash -string "${{ steps.version_info.outputs.GIT_HASH }}" "$INFO_PLIST"
         
-        echo "Updated Info.plist with version ${{ steps.version_info.outputs.VERSION }} and hash ${{ steps.version_info.outputs.GIT_HASH_SHORT }}"
+        # Debug: Show updated Info.plist content
+        echo "📄 Updated Info.plist content:"
+        plutil -p "$INFO_PLIST" | grep -E "(CFBundleShortVersionString|CFBundleVersion|GitHash)"
+        
+        echo "✅ Updated Info.plist with version ${{ steps.version_info.outputs.VERSION }} and hash ${{ steps.version_info.outputs.GIT_HASH_SHORT }}"
         
     - name: Download Sparkle tools
       run: |
