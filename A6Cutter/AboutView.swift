@@ -71,13 +71,16 @@ struct AboutView: View {
     
     private var appVersion: String {
         if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
-            return version
+            // Remove 'v' prefix if present for consistent display
+            return version.hasPrefix("v") ? String(version.dropFirst()) : version
         }
         return "Deve"
     }
     
     private var buildNumber: String {
         if let build = Bundle.main.infoDictionary?["CFBundleVersion"] as? String {
+            // For local builds, CFBundleVersion is git commit hash
+            // For GitHub Actions builds, it might be a number
             return build
         }
         return "dev"
