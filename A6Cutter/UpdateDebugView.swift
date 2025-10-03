@@ -390,6 +390,11 @@ struct UpdateDebugView: View {
         try await runCommand("cp", arguments: ["-R", appPath, "/Applications/"])
         addLogMessage("✅ Aplikace zkopírována", isError: false)
         
+        // Remove quarantine attribute to prevent security dialog
+        addLogMessage("🔓 Odstraňuji quarantine atribut...", isError: false)
+        try await runCommand("xattr", arguments: ["-dr", "com.apple.quarantine", targetPath])
+        addLogMessage("✅ Quarantine atribut odstraněn", isError: false)
+        
         // Unmount DMG
         addLogMessage("💿 Odmountovávám DMG...", isError: false)
         try await runCommand("hdiutil", arguments: ["detach", mountPoint, "-quiet"])
@@ -447,6 +452,8 @@ struct UpdateDebugView: View {
             commandPath = "/usr/bin/hdiutil"
         case "open":
             commandPath = "/usr/bin/open"
+        case "xattr":
+            commandPath = "/usr/bin/xattr"
         default:
             commandPath = "/usr/bin/\(command)"
         }
