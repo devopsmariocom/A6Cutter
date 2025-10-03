@@ -30,6 +30,10 @@ struct GitHubRelease: Codable, Sendable {
 class A6CutterApp: App {
     @Environment(\.openWindow) private var openWindow
     
+    required init() {
+        // Required initializer for App protocol
+    }
+    
     // Sparkle updater controller - TODO: Uncomment after adding Sparkle package
     // private let updaterController = SPUStandardUpdaterController(
     //     startingUpdater: true,
