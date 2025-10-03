@@ -7,8 +7,8 @@ SCHEME = A6Cutter
 CONFIGURATION = Release
 DESTINATION = "platform=macOS"
 
-# Version information (can be overridden)
-VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")
+# Version information (mimics GitHub Actions format with -dev suffix)
+VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null || echo "v1.0.0")-dev
 BUILD_NUMBER ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "dev")
 GIT_HASH ?= $(shell git rev-parse HEAD 2>/dev/null || echo "dev")
 

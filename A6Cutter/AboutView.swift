@@ -72,7 +72,8 @@ struct AboutView: View {
     private var appVersion: String {
         if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
             // Remove 'v' prefix if present for consistent display
-            return version.hasPrefix("v") ? String(version.dropFirst()) : version
+            let cleanVersion = version.hasPrefix("v") ? String(version.dropFirst()) : version
+            return cleanVersion
         }
         return "Deve"
     }
