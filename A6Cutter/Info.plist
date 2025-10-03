@@ -13,13 +13,13 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>v1.0.26</string>
+	<string>v1.0.27</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>f6b46ee</string>
+	<string>18ec8e4</string>
 	<key>GitHash</key>
-	<string>f6b46eee13b732d5d9caee15898a9d20ad68297e</string>
+	<string>18ec8e4889cd378504bff68879e3d3a31800f6a7</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>14.0</string>
 	<key>NSHumanReadableCopyright</key>

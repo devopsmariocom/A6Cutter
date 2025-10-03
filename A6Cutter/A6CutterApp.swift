@@ -30,6 +30,12 @@ struct GitHubRelease: Codable, Sendable {
 struct A6CutterApp: App {
     @Environment(\.openWindow) private var openWindow
     
+    // Update progress state
+    @State private var showUpdateProgress = false
+    @State private var updateCurrentVersion = ""
+    @State private var updateLatestVersion = ""
+    @State private var updateReleaseNotes = ""
+    
     // Sparkle updater controller - TODO: Uncomment after adding Sparkle package
     // private let updaterController = SPUStandardUpdaterController(
     //     startingUpdater: true,
@@ -124,67 +130,13 @@ struct A6CutterApp: App {
     }
     
     private func showUpdateDialog(currentVersion: String, latestVersion: String, releaseNotes: String) {
-        let alert = NSAlert()
-        alert.messageText = "Update Available"
-        alert.informativeText = "A6Cutter \(latestVersion) is available. You currently have version \(currentVersion).\n\n\(releaseNotes)"
-        alert.alertStyle = .informational
-        alert.addButton(withTitle: "Download & Install")
-        alert.addButton(withTitle: "Later")
-        
-        let response = alert.runModal()
-        if response == .alertFirstButtonReturn {
-            // Download and install the update directly
-            downloadAndInstallUpdate(latestVersion: latestVersion)
-        }
+        updateCurrentVersion = currentVersion
+        updateLatestVersion = latestVersion
+        updateReleaseNotes = releaseNotes
+        showUpdateProgress = true
     }
     
-    private func downloadAndInstallUpdate(latestVersion: String) {
-        // Download the DMG from GitHub releases
-        let dmgUrl = "https://github.com/devopsmariocom/A6Cutter/releases/download/\(latestVersion)/A6Cutter-\(latestVersion).dmg"
-        
-        guard let url = URL(string: dmgUrl) else {
-            showDownloadError("Invalid download URL")
-            return
-        }
-        
-        // Show progress dialog with progress bar and log
-        // Progress dialog removed for struct compatibility
-        
-        // Progress updates removed for struct compatibility
-        
-        let task = URLSession.shared.downloadTask(with: url) { localURL, response, error in
-            DispatchQueue.main.async {
-                if let error = error {
-                    self.showDownloadError("Download failed: \(error.localizedDescription)")
-                    return
-                }
-                
-                guard let localURL = localURL else {
-                    self.showDownloadError("No local file received")
-                    return
-                }
-                
-                // Download completed, starting installation
-                
-                // Install the update
-                self.installUpdate(from: localURL)
-            }
-        }
-        
-        task.resume()
-    }
-    
-    // Progress window functionality removed for struct compatibility
-    
-    // Progress window functionality removed for struct compatibility
-    // Updates will now redirect to GitHub releases page
-    
-    private func installUpdate(from dmgURL: URL) {
-        // Simplified update - just redirect to GitHub releases
-        if let url = URL(string: "https://github.com/devopsmariocom/A6Cutter/releases") {
-            NSWorkspace.shared.open(url)
-        }
-    }
+    // Update functionality moved to UpdateProgressView
     
     private func showDownloadError(_ message: String) {
         let alert = NSAlert()
@@ -229,6 +181,14 @@ struct A6CutterApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
+                .sheet(isPresented: $showUpdateProgress) {
+                    UpdateProgressView(
+                        isPresented: $showUpdateProgress,
+                        currentVersion: updateCurrentVersion,
+                        latestVersion: updateLatestVersion,
+                        releaseNotes: updateReleaseNotes
+                    )
+                }
         }
         .modelContainer(sharedModelContainer)
         .commands {
