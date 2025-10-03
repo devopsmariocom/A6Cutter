@@ -78,7 +78,8 @@ struct A6CutterApp: App {
     
     private func getCurrentAppVersion() -> String {
         if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
-            return version
+            // Remove 'v' prefix if present for consistent comparison
+            return version.hasPrefix("v") ? String(version.dropFirst()) : version
         }
         return "1.0.0"
     }
