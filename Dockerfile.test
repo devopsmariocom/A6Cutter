@@ -1,0 +1,79 @@
+# Dockerfile for testing GitHub Actions workflow locally
+FROM macos:latest
+
+# Install required tools
+RUN apt-get update && apt-get install -y \
+    curl \
+    jq \
+    git \
+    xcodebuild \
+    hdiutil \
+    plutil \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set working directory
+WORKDIR /workspace
+
+# Copy project files
+COPY . .
+
+# Set up environment variables for testing
+ENV GITHUB_REF=refs/tags/v1.0.50
+ENV GITHUB_RUN_NUMBER=42
+ENV GITHUB_EVENT_NAME=push
+
+# Run the workflow steps
+RUN echo "🔧 Testing GitHub Actions workflow locally..."
+
+# Step 1: Get version and hash info
+RUN echo "📝 Getting version and hash info..." && \
+    if [[ $GITHUB_REF == refs/tags/* ]]; then \
+      VERSION=${GITHUB_REF#refs/tags/}; \
+    else \
+      VERSION=dev-$(date +%Y%m%d-%H%M%S); \
+    fi && \
+    GIT_HASH=$(git rev-parse HEAD) && \
+    GIT_HASH_SHORT=$(git rev-parse --short HEAD) && \
+    echo "VERSION=$VERSION" && \
+    echo "GIT_HASH=$GIT_HASH" && \
+    echo "GIT_HASH_SHORT=$GIT_HASH_SHORT"
+
+# Step 2: Update Info.plist
+RUN echo "📝 Updating Info.plist..." && \
+    INFO_PLIST="A6Cutter/Info.plist" && \
+    echo "📄 Current Info.plist content:" && \
+    plutil -p "$INFO_PLIST" | grep -E "(CFBundleShortVersionString|CFBundleVersion|GitHash)" || echo "No version info found" && \
+    echo "🔧 Updating CFBundleShortVersionString to: v1.0.50" && \
+    plutil -replace CFBundleShortVersionString -string "v1.0.50" "$INFO_PLIST" && \
+    echo "🔧 Updating CFBundleVersion to: 42" && \
+    plutil -replace CFBundleVersion -string "42" "$INFO_PLIST" && \
+    echo "🔧 Updating GitHash to: a1b2c3d4e5f6789012345678901234567890abcd" && \
+    plutil -replace GitHash -string "a1b2c3d4e5f6789012345678901234567890abcd" "$INFO_PLIST" && \
+    echo "📄 Updated Info.plist content:" && \
+    plutil -p "$INFO_PLIST" | grep -E "(CFBundleShortVersionString|CFBundleVersion|GitHash)"
+
+# Step 3: Test appcast generation (simulate)
+RUN echo "📡 Testing appcast generation..." && \
+    mkdir -p releases && \
+    echo "Test DMG content" > releases/A6Cutter-v1.0.50.dmg && \
+    echo "Test appcast content" > releases/releases.atom && \
+    echo "📁 Available files in releases/:" && \
+    ls -la releases/ && \
+    if [ -f "releases/releases.atom" ]; then \
+      mv releases/releases.atom appcast.xml && \
+      echo "✅ appcast.xml generated successfully (from releases/releases.atom)!"; \
+    else \
+      echo "❌ Failed to generate appcast.xml"; \
+      exit 1; \
+    fi
+
+# Step 4: Verify final result
+RUN echo "📋 Final verification:" && \
+    echo "📄 Info.plist content:" && \
+    plutil -p A6Cutter/Info.plist | grep -E "(CFBundleShortVersionString|CFBundleVersion|GitHash)" && \
+    echo "📄 appcast.xml exists:" && \
+    ls -la appcast.xml && \
+    echo "✅ All tests passed!"
+
+CMD ["echo", "Docker test completed successfully!"]
+

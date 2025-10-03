@@ -247,13 +247,13 @@ jobs:
           --full-release-notes-url "https://github.com/devopsmariocom/A6Cutter/releases" \
           releases/
         
-        # Move appcast.xml to root (generate_appcast creates releases.atom)
+        # Move appcast.xml to root (generate_appcast creates releases.atom in releases/ directory)
         if [ -f "releases/appcast.xml" ]; then
           mv releases/appcast.xml .
           echo "✅ appcast.xml generated successfully!"
-        elif [ -f "releases.atom" ]; then
-          mv releases.atom appcast.xml
-          echo "✅ appcast.xml generated successfully (from releases.atom)!"
+        elif [ -f "releases/releases.atom" ]; then
+          mv releases/releases.atom appcast.xml
+          echo "✅ appcast.xml generated successfully (from releases/releases.atom)!"
         else
           echo "❌ Failed to generate appcast.xml"
           echo "📁 Available files in releases/:"
