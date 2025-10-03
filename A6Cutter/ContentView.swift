@@ -18,12 +18,14 @@ extension String {
 struct ContentView: View {
     @State private var isImporterPresented = false
     @State private var isPrintPresented = false
+    @State private var isSavePresented = false
     @FocusState private var isPrintButtonFocused: Bool
     @FocusState private var isHorizontalShiftFocused: Bool
     @FocusState private var isVerticalShiftFocused: Bool
     @FocusState private var isSkipPagesFocused: Bool
     @State private var cutDocument: PDFDocument?
     @State private var originalDocument: PDFDocument?
+    @State private var originalFileName: String = ""
     @State private var pageCount: Int = 0
     
     // Computed property pro finální počet stránek po odečtení vynechaných
@@ -389,14 +391,23 @@ struct ContentView: View {
                 .font(.caption)
                 .foregroundColor(.secondary)
             
-            Button("Tisk".localized) {
-                printDocument(doc)
+            HStack(spacing: 12) {
+                Button("Uložit".localized) {
+                    saveDocument(doc)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                .keyboardShortcut("s", modifiers: .command)
+                
+                Button("Tisk".localized) {
+                    printDocument(doc)
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .focused($isPrintButtonFocused)
+                .keyboardShortcut(.defaultAction)
+                .keyboardShortcut("p", modifiers: [.command, .shift])
             }
-            .buttonStyle(.borderedProminent)
-            .controlSize(.large)
-            .focused($isPrintButtonFocused)
-            .keyboardShortcut(.defaultAction)
-            .keyboardShortcut("p", modifiers: [.command, .shift])
         }
     }
     
@@ -501,6 +512,9 @@ struct ContentView: View {
                         
                         // Uložíme původní dokument pro regeneraci
                         self.originalDocument = originalDocument
+                        
+                        // Uložíme název původního souboru
+                        self.originalFileName = url.lastPathComponent
                         
                         // Pro preview nepoužíváme vynechání stránek - zobrazíme všechny stránky
                         // Použijeme efektivní hodnoty podle stavu sekcí
@@ -1125,6 +1139,92 @@ struct PDFThumbnailRepresentable: NSViewRepresentable {
             document.insert(page, at: 0)
             nsView.document = document
         }
+    }
+    
+    private func saveDocument(_ document: PDFDocument) {
+        // Vytvoříme nový dokument s filtrovanými stránkami
+        let filteredDocument = PDFDocument()
+        
+        if skipPagesEnabled {
+            let skipPagesList = parseSkipPages()
+            var pageIndex = 0
+            
+            for i in 0..<document.pageCount {
+                if !skipPagesList.contains(i + 1) {
+                    if let page = document.page(at: i) {
+                        filteredDocument.insert(page, at: pageIndex)
+                        pageIndex += 1
+                    }
+                }
+            }
+        } else {
+            // Pokud není skip pages povoleno, zkopírujeme všechny stránky
+            for i in 0..<document.pageCount {
+                if let page = document.page(at: i) {
+                    filteredDocument.insert(page, at: i)
+                }
+            }
+        }
+        
+        // Získáme název původního souboru
+        let originalFileName = getOriginalFileName()
+        let saveFileName = originalFileName.replacingOccurrences(of: ".pdf", with: "_A6Cutted.pdf")
+        
+        // Vytvoříme dočasný soubor
+        let tempURL = FileManager.default.temporaryDirectory.appendingPathComponent(saveFileName)
+        
+        // Uložíme dokument
+        if filteredDocument.write(to: tempURL) {
+            // Otevřeme save dialog
+            let savePanel = NSSavePanel()
+            savePanel.nameFieldStringValue = saveFileName
+            savePanel.allowedContentTypes = [.pdf]
+            savePanel.title = "Uložit PDF"
+            
+            savePanel.begin { response in
+                if response == .OK, let url = savePanel.url {
+                    do {
+                        try FileManager.default.copyItem(at: tempURL, to: url)
+                        // Zobrazíme potvrzení
+                        DispatchQueue.main.async {
+                            let alert = NSAlert()
+                            alert.messageText = "PDF uloženo"
+                            alert.informativeText = "Soubor byl úspěšně uložen jako: \(url.lastPathComponent)"
+                            alert.alertStyle = .informational
+                            alert.addButton(withTitle: "OK")
+                            alert.runModal()
+                        }
+                    } catch {
+                        DispatchQueue.main.async {
+                            let alert = NSAlert()
+                            alert.messageText = "Chyba při ukládání"
+                            alert.informativeText = "Nepodařilo se uložit soubor: \(error.localizedDescription)"
+                            alert.alertStyle = .warning
+                            alert.addButton(withTitle: "OK")
+                            alert.runModal()
+                        }
+                    }
+                }
+                
+                // Vyčistíme dočasný soubor
+                try? FileManager.default.removeItem(at: tempURL)
+            }
+        } else {
+            let alert = NSAlert()
+            alert.messageText = "Chyba při ukládání"
+            alert.informativeText = "Nepodařilo se vytvořit PDF soubor"
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: "OK")
+            alert.runModal()
+        }
+    }
+    
+    private func getOriginalFileName() -> String {
+        // Použijeme uložený název původního souboru
+        if !originalFileName.isEmpty {
+            return originalFileName
+        }
+        return "document.pdf"
     }
 }
 

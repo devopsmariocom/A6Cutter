@@ -207,11 +207,19 @@ jobs:
       run: |
         # Create DMG directory structure
         mkdir -p dmg/A6Cutter.app
+        mkdir -p dmg/Applications
         
         # Copy the built app
         cp -R /Users/runner/Library/Developer/Xcode/DerivedData/A6Cutter-*/Build/Products/Release/A6Cutter.app dmg/
         
-        # Create DMG
+        # Create Applications shortcut (symlink)
+        ln -s /Applications dmg/Applications
+        
+        # Create arrow image for installation instruction
+        # We'll use a simple text-based arrow since we can't easily create images in CI
+        echo "Drag A6Cutter.app to Applications folder" > dmg/README.txt
+        
+        # Create DMG with custom layout
         hdiutil create -volname "A6Cutter" -srcfolder dmg -ov -format UDZO A6Cutter.dmg
         
     - name: Generate appcast.xml
