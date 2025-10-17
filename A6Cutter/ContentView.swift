@@ -1193,12 +1193,65 @@ struct PDFPageView: View {
     }
 }
 
+// Custom PDFView that prevents mouse tracking crashes
+class SafePDFView: PDFView {
+    override func awakeFromNib() {
+        super.awakeFromNib()
+        setupSafeConfiguration()
+    }
+    
+    override init(frame frameRect: NSRect) {
+        super.init(frame: frameRect)
+        setupSafeConfiguration()
+    }
+    
+    required init?(coder: NSCoder) {
+        super.init(coder: coder)
+        setupSafeConfiguration()
+    }
+    
+    private func setupSafeConfiguration() {
+        // Disable all mouse interactions that can cause crashes
+        self.allowsDragging = false
+        self.wantsLayer = true
+        
+        // Disable mouse tracking areas
+        self.trackingAreas.forEach { area in
+            self.removeTrackingArea(area)
+        }
+    }
+    
+    override func updateTrackingAreas() {
+        // Override to prevent automatic tracking area creation
+        super.updateTrackingAreas()
+        // Remove any tracking areas that might be added
+        self.trackingAreas.forEach { area in
+            self.removeTrackingArea(area)
+        }
+    }
+    
+    override func mouseMoved(with event: NSEvent) {
+        // Override to prevent crashes from mouse movement
+        // Do nothing - this prevents the crash
+    }
+    
+    override func mouseEntered(with event: NSEvent) {
+        // Override to prevent crashes from mouse events
+        // Do nothing - this prevents the crash
+    }
+    
+    override func mouseExited(with event: NSEvent) {
+        // Override to prevent crashes from mouse events
+        // Do nothing - this prevents the crash
+    }
+}
+
 // PDF thumbnail reprezentace pro macOS
 struct PDFThumbnailRepresentable: NSViewRepresentable {
     let page: PDFPage
     
-    func makeNSView(context: Context) -> PDFView {
-        let pdfView = PDFView()
+    func makeNSView(context: Context) -> SafePDFView {
+        let pdfView = SafePDFView()
         
         // Vytvoř nový dokument s jednou stránkou
         let document = PDFDocument()
@@ -1211,13 +1264,10 @@ struct PDFThumbnailRepresentable: NSViewRepresentable {
         pdfView.displayDirection = .vertical
         pdfView.scaleFactor = 0.3 // Menší velikost pro thumbnaily
         
-        // Zakázat interakce pro thumbnaily
-        pdfView.allowsDragging = false
-        
         return pdfView
     }
     
-    func updateNSView(_ nsView: PDFView, context: Context) {
+    func updateNSView(_ nsView: SafePDFView, context: Context) {
         // Aktualizace není potřeba, stránka se nemění
         // Ale ujistíme se, že je PDFView stále platný
         if nsView.document == nil {
@@ -1234,17 +1284,18 @@ struct PDFThumbnailRepresentable: NSViewRepresentable {
 struct PDFPageRepresentable: NSViewRepresentable {
     let page: PDFPage
     
-    func makeNSView(context: Context) -> PDFView {
-        let pdfView = PDFView()
+    func makeNSView(context: Context) -> SafePDFView {
+        let pdfView = SafePDFView()
         pdfView.document = PDFDocument()
         pdfView.document?.insert(page, at: 0)
         pdfView.autoScales = true
         pdfView.displayMode = .singlePage
         pdfView.displayDirection = .vertical
+        
         return pdfView
     }
     
-    func updateNSView(_ nsView: PDFView, context: Context) {
+    func updateNSView(_ nsView: SafePDFView, context: Context) {
         // Aktualizace není potřeba, stránka se nemění
     }
 }
