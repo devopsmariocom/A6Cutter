@@ -140,7 +140,7 @@ create_dmg() {
     cp -R "$APP_PATH" build/dmg/
     
     # Create Applications shortcut
-    ln -s /Applications build/dmg/Applications
+    ln -s /Applications build/dmg/
     
     # Create README
     echo "Drag A6Cutter.app to Applications folder" > build/dmg/README.txt

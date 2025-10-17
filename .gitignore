@@ -8,4 +8,5 @@ keys/
 bin/
 releases/
 appcast.xml
+build/*
 *.dmg
