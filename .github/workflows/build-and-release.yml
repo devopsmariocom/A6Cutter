@@ -85,6 +85,14 @@ jobs:
         
         echo "✅ Updated Info.plist with version ${{ steps.version_info.outputs.VERSION }} and hash ${{ steps.version_info.outputs.GIT_HASH_SHORT }}"
         
+    - name: Commit updated Info.plist
+      run: |
+        # Commit the updated Info.plist to ensure it's used in the build
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        git add A6Cutter/Info.plist
+        git commit -m "Update Info.plist for release ${{ steps.version_info.outputs.VERSION }}" || echo "No changes to commit"
+        
     - name: Download Sparkle tools
       run: |
         echo "📦 Downloading Sparkle tools..."
@@ -213,7 +221,15 @@ jobs:
         
     - name: Build A6Cutter
       run: |
+        # Verify Info.plist was updated before building
+        echo "🔍 Verifying Info.plist before build:"
+        plutil -p A6Cutter/Info.plist | grep -E "(CFBundleShortVersionString|CFBundleVersion|GitHash)"
+        
         xcodebuild -scheme A6Cutter -configuration Release -destination "platform=macOS" clean build
+        
+        # Verify the built app has correct version
+        echo "🔍 Verifying built app version:"
+        plutil -p /Users/runner/Library/Developer/Xcode/DerivedData/A6Cutter-*/Build/Products/Release/A6Cutter.app/Contents/Info.plist | grep -E "(CFBundleShortVersionString|CFBundleVersion|GitHash)"
         
     - name: Create DMG
       run: |
